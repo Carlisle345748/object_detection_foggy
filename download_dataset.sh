@@ -1,20 +1,12 @@
 #! /usr/bin/bash
 
-apt-get update
-apt-get install gcc, g++
-apt-get install nvidia-cuda-dev
-
-pip install shapely
-pip install torch, torchvision
-pip install opencv-python
-python -m pip install 'git+https://github.com/facebookresearch/detectron2.git'
-
+mkdir -p datasets
 
 # Download and prepare dataset
 function download_and_unzip() {
     datasets_name="$1"
     zip_file="$2"
-    python scripts/download.py -d 'datasets' "$zip_file"
+    python3 scripts/download.py -d 'datasets' "$zip_file"
     echo "unzipping $zip_file..."
     unzip -q "datasets/$zip_file" -d "datasets/$datasets_name"
     rm "datasets/$datasets_name/license.txt" "datasets/$datasets_name/README" "datasets/$zip_file"
