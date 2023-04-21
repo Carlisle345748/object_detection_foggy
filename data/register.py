@@ -3,7 +3,7 @@ import os
 from detectron2.data import DatasetCatalog, MetadataCatalog
 from detectron2.data.datasets.builtin_meta import _get_builtin_metadata
 
-from .load_cityscapes_foggy import load_cityscapes_instances
+from load_cityscapes_foggy import load_cityscapes_instances
 
 DATASETS = {
     "train": ("cityscapes_foggy/leftImg8bit/train", "cityscapes_foggy/gtFine/train"),

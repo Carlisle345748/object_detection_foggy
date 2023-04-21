@@ -14,7 +14,7 @@ INPUT:
   MAX_SIZE_TEST: 1200
 DATASETS:
   TRAIN: ("cityscapes_foggy_train",)
-  TEST: ("cityscapes_foggy_val",)
+  TEST: ("cityscapes_foggy_val", "cityscapes_fine_instance_seg_val")
 SOLVER:
   BASE_LR: 0.001
   WEIGHT_DECAY: 0.0005

@@ -1,6 +1,5 @@
 import functools
 import json
-import logging
 import multiprocessing as mp
 import os
 from itertools import chain
@@ -11,6 +10,7 @@ from PIL import Image
 from detectron2.structures import BoxMode
 from detectron2.utils.comm import get_world_size
 from detectron2.utils.file_io import PathManager
+from detectron2.utils.logger import setup_logger
 
 try:
     import cv2  # noqa
@@ -19,7 +19,7 @@ except ImportError:
     pass
 
 
-logger = logging.getLogger(__name__)
+logger = setup_logger(name=__name__, output="output")
 
 
 def _get_cityscapes_files(image_dir, gt_dir):
