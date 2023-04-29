@@ -8,7 +8,7 @@ from detectron2.engine import default_argument_parser, launch, default_setup
 
 import data  # Import for side-effect
 
-from trainer.baseline_trainer import BaselineTrainer
+from trainer.baseline import BaselineTrainer
 
 
 def show_version():
