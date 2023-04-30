@@ -3,3 +3,4 @@
 datasets
 output
 *.pyc
+cityscapes-data-vis
