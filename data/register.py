@@ -24,13 +24,15 @@ def register_dataset():
         for d in dirs:
             data_dir.append(os.path.join(dataset_dir, d) if d else None)
 
-        image_dir, gt_dir, depth_dir = data_dir[0], data_dir[1], data_dir[2]
         foggy = dataset_name.startswith("cityscapes_foggy")
+        image_dir, gt_dir, depth_dir = data_dir[0], data_dir[1], data_dir[2]
 
+        # Register Dataset
         DatasetCatalog.register(dataset_name,
-                                lambda img=image_dir, gt=gt_dir, depth=depth_dir:
-                                load_cityscapes_instances(img, gt, depth, False, False, foggy))
+                                lambda img=image_dir, gt=gt_dir, depth=depth_dir, fog=foggy:
+                                load_cityscapes_instances(img, gt, depth, False, False, fog))
 
+        # Register Dataset Metadata
         MetadataCatalog.get(dataset_name).set(
             **_get_builtin_metadata("cityscapes"),
             image_dir=image_dir,
