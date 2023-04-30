@@ -20,44 +20,53 @@ except ImportError:
     # OpenCV is an optional dependency at the moment
     pass
 
-
 logger = logging.getLogger(__name__)
 
 
-def _get_cityscapes_files(image_dir, gt_dir):
+def _get_cityscapes_files(image_dir: str, gt_dir: str, depth_dir: str = None, foggy=False):
     files = []
     # scan through the directory
     cities = PathManager.ls(image_dir)
+    cities = [c for c in cities if c != ".DS_Store"]  # Remove macos system files
     logger.info(f"{len(cities)} cities found in '{image_dir}'.")
     for city in cities:
         city_img_dir = os.path.join(image_dir, city)
         city_gt_dir = os.path.join(gt_dir, city)
+        city_depth_dir = os.path.join(depth_dir, city) if depth_dir else None
         for basename in PathManager.ls(city_img_dir):
             image_file = os.path.join(city_img_dir, basename)
 
-            suffix = "leftImg8bit.png"
-            assert basename.endswith(suffix), basename
-            basename = basename[: -len(suffix)]
+            if foggy:
+                suffix = 'leftImg8bit_foggy'
+                basename = basename.split(suffix)[0]
+            else:
+                suffix = "leftImg8bit.png"
+                assert basename.endswith(suffix), basename
+                basename = basename[: -len(suffix)]
 
             instance_file = os.path.join(city_gt_dir, basename + "gtFine_instanceIds.png")
             label_file = os.path.join(city_gt_dir, basename + "gtFine_labelIds.png")
             json_file = os.path.join(city_gt_dir, basename + "gtFine_polygons.json")
+            depth_file = os.path.join(city_depth_dir, basename + "disparity.png") if city_depth_dir else None
 
-            files.append((image_file, instance_file, label_file, json_file))
+            files.append((image_file, instance_file, label_file, json_file, depth_file))
     assert len(files), "No images found in {}".format(image_dir)
     for f in files[0]:
-        assert PathManager.isfile(f), f
+        if f is not None:
+            assert PathManager.isfile(f), f
     return files
 
 
-def load_cityscapes_instances(image_dir, gt_dir, from_json=True, to_polygons=True):
+def load_cityscapes_instances(image_dir, gt_dir, depth_dir=None, from_json=True, to_polygons=True, foggy=False):
     """
     Args:
         image_dir (str): path to the raw dataset. e.g., "~/cityscapes/leftImg8bit/train".
         gt_dir (str): path to the raw annotations. e.g., "~/cityscapes/gtFine/train".
+        depth_dir (str): path to the depth map dataset, e.g. "~/cityscapes/disparity/train"
         from_json (bool): whether to read annotations from the raw json file or the png files.
         to_polygons (bool): whether to represent the segmentation as polygons
             (COCO's format) instead of masks (cityscapes's format).
+        foggy (bool): whether to use foggy dataset
 
     Returns:
         list[dict]: a list of dicts in Detectron2 standard format. (See
@@ -68,7 +77,7 @@ def load_cityscapes_instances(image_dir, gt_dir, from_json=True, to_polygons=Tru
             "Cityscapes's json annotations are in polygon format. "
             "Converting to mask format is not supported now."
         )
-    files = _get_cityscapes_files(image_dir, gt_dir)
+    files = _get_cityscapes_files(image_dir, gt_dir, depth_dir, foggy)
 
     logger.info("Preprocessing cityscapes annotations ...")
     # This is still not fast: all workers will execute duplicate works and will
@@ -92,39 +101,6 @@ def load_cityscapes_instances(image_dir, gt_dir, from_json=True, to_polygons=Tru
     return ret
 
 
-def load_cityscapes_semantic(image_dir, gt_dir):
-    """
-    Args:
-        image_dir (str): path to the raw dataset. e.g., "~/cityscapes/leftImg8bit/train".
-        gt_dir (str): path to the raw annotations. e.g., "~/cityscapes/gtFine/train".
-
-    Returns:
-        list[dict]: a list of dict, each has "file_name" and
-            "sem_seg_file_name".
-    """
-    ret = []
-    # gt_dir is small and contain many small files. make sense to fetch to local first
-    gt_dir = PathManager.get_local_path(gt_dir)
-    for image_file, _, label_file, json_file in _get_cityscapes_files(image_dir, gt_dir):
-        label_file = label_file.replace("labelIds", "labelTrainIds")
-
-        with PathManager.open(json_file, "r") as f:
-            jsonobj = json.load(f)
-        ret.append(
-            {
-                "file_name": image_file,
-                "sem_seg_file_name": label_file,
-                "height": jsonobj["imgHeight"],
-                "width": jsonobj["imgWidth"],
-            }
-        )
-    assert len(ret), f"No images found in {image_dir}!"
-    assert PathManager.isfile(
-        ret[0]["sem_seg_file_name"]
-    ), "Please generate labelTrainIds.png with cityscapesscripts/preparation/createTrainIdLabelImgs.py"  # noqa
-    return ret
-
-
 def _cityscapes_files_to_dict(files, from_json, to_polygons):
     """
     Parse cityscapes annotation files to a instance segmentation dataset dict.
@@ -140,7 +116,7 @@ def _cityscapes_files_to_dict(files, from_json, to_polygons):
     """
     from cityscapesscripts.helpers.labels import id2label, name2label
 
-    image_file, instance_id_file, _, json_file = files
+    image_file, instance_id_file, _, json_file, depth_file = files
 
     annos = []
 
@@ -239,6 +215,9 @@ def _cityscapes_files_to_dict(files, from_json, to_polygons):
             "width": inst_image.shape[1],
         }
 
+        if depth_file:
+            ret["depth_file"] = depth_file
+
         for instance_id in flattened_ids:
             # For non-crowd annotations, instance_id // 1000 is the label_id
             # Crowd annotations have <1000 instance ids
@@ -289,9 +268,10 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("image_dir")
-    parser.add_argument("gt_dir")
-    parser.add_argument("--type", choices=["instance", "semantic"], default="instance")
+    parser.add_argument("--image_dir", required=True)
+    parser.add_argument("--gt_dir", required=True)
+    parser.add_argument("--depth_dir", default=None)
+    parser.add_argument("--foggy", action='store_true')
     args = parser.parse_args()
     from detectron2.data.catalog import Metadata
     from detectron2.utils.visualizer import Visualizer
@@ -302,22 +282,13 @@ if __name__ == "__main__":
     dirname = "cityscapes-data-vis"
     os.makedirs(dirname, exist_ok=True)
 
-    if args.type == "instance":
-        dicts = load_cityscapes_instances(
-            args.image_dir, args.gt_dir, from_json=True, to_polygons=True
-        )
-        logger.info("Done loading {} samples.".format(len(dicts)))
+    dicts = load_cityscapes_instances(
+        args.image_dir, args.gt_dir, args.depth_dir, from_json=False, to_polygons=False, foggy=args.foggy
+    )
+    logger.info("Done loading {} samples.".format(len(dicts)))
 
-        thing_classes = [k.name for k in labels if k.hasInstances and not k.ignoreInEval]
-        meta = Metadata().set(thing_classes=thing_classes)
-
-    else:
-        dicts = load_cityscapes_semantic(args.image_dir, args.gt_dir)
-        logger.info("Done loading {} samples.".format(len(dicts)))
-
-        stuff_classes = [k.name for k in labels if k.trainId != 255]
-        stuff_colors = [k.color for k in labels if k.trainId != 255]
-        meta = Metadata().set(stuff_classes=stuff_classes, stuff_colors=stuff_colors)
+    thing_classes = [k.name for k in labels if k.hasInstances and not k.ignoreInEval]
+    meta = Metadata().set(thing_classes=thing_classes)
 
     for d in dicts:
         img = np.array(Image.open(PathManager.open(d["file_name"], "rb")))
@@ -327,3 +298,8 @@ if __name__ == "__main__":
         # cv2.waitKey()
         fpath = os.path.join(dirname, os.path.basename(d["file_name"]))
         vis.save(fpath)
+        if args.depth_dir:
+            depth_basename = os.path.basename(d["depth_file"]).split("disparity")[0]
+            image_basename = os.path.basename(d["file_name"]).split("leftImg8bit")[0]
+            assert image_basename == depth_basename
+            logger.info(f'Image: {image_basename} Depth: {depth_basename}')
