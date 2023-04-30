@@ -5,12 +5,12 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: Current File",
+            "name": "Train",
             "type": "python",
             "request": "launch",
-            "program": "${file}",
+            "program": "train_net.py",
             "console": "integratedTerminal",
-            "justMyCode": true,
+            "justMyCode": false,
             "args": ["--num-gpus", "1", "--config", "config/RCNN-C4-50.yaml", "OUTPUT_DIR", "output/test"]
         }
     ]
