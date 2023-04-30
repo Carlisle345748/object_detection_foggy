@@ -25,7 +25,6 @@ if [ ! -d "datasets/cityscapes_foggy/leftImg8bit" ]; then
     download_and_unzip cityscapes_foggy leftImg8bit_trainval_foggyDBF.zip
     mv datasets/cityscapes_foggy/leftImg8bit_foggyDBF datasets/cityscapes_foggy/leftImg8bit
     rm datasets/cityscapes_foggy/foggy_trainval_refined_filenames.txt
-    rm datasets/cityscapes_foggy/README_foggyDBF.md
 fi
 
 if [ ! -d "datasets/cityscapes_foggy/gtFine" ]; then
