@@ -41,7 +41,7 @@ class DAAspectRatioGroupedDataset(data.IterableDataset):
             s_bucket.append(s)
 
             # target dataset
-            t.pop("instances")  # Remove annotations for target domain
+            t.pop("instances", None)  # Remove annotations for target domain
             tw, th = t["width"], t["height"]
             t_bucket_id = 0 if tw > th else 1
             t_bucket = self.target_bucket[t_bucket_id]

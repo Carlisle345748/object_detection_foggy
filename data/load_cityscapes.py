@@ -67,7 +67,29 @@ def load_cityscapes_instances(image_dir, gt_dir, depth_dir=None, from_json=True,
     return ret
 
 
-def _get_cityscapes_files(image_dir: str, gt_dir: str, depth_dir: str = None, foggy=False):
+def load_cityscapes_depth(image_dir, depth_dir):
+    """
+    Load cityscape image and depth maps
+
+    Args:
+        image_dir: image directory
+        depth_dir: depth map directory
+    Returns:
+        A list of tuple(filenames). Each tuple contains all files for a sample
+    """
+    files = _get_cityscapes_files(image_dir=image_dir, depth_dir=depth_dir)
+
+    logger.info("Preprocessing cityscapes annotations ...")
+
+    pool = mp.Pool(processes=max(mp.cpu_count() // get_world_size() // 2, 4))
+    ret = pool.map(_cityscapes_depth_files_to_dict, files)
+
+    logger.info("Loaded {} images from {}".format(len(ret), image_dir))
+
+    return ret
+
+
+def _get_cityscapes_files(image_dir: str, gt_dir: str = None, depth_dir: str = None, foggy=False):
     """
         Group the files of each sample for cityscapes/cityscapes_foggy dataset
     Args:
@@ -86,7 +108,7 @@ def _get_cityscapes_files(image_dir: str, gt_dir: str, depth_dir: str = None, fo
     logger.info(f"{len(cities)} cities found in '{image_dir}'.")
     for city in cities:
         city_img_dir = os.path.join(image_dir, city)
-        city_gt_dir = os.path.join(gt_dir, city)
+        city_gt_dir = os.path.join(gt_dir, city) if gt_dir else None
         city_depth_dir = os.path.join(depth_dir, city) if depth_dir else None
         for basename in PathManager.ls(city_img_dir):
             image_file = os.path.join(city_img_dir, basename)
@@ -99,9 +121,9 @@ def _get_cityscapes_files(image_dir: str, gt_dir: str, depth_dir: str = None, fo
                 assert basename.endswith(suffix), basename
                 basename = basename[: -len(suffix)]
 
-            instance_file = os.path.join(city_gt_dir, basename + "gtFine_instanceIds.png")
-            label_file = os.path.join(city_gt_dir, basename + "gtFine_labelIds.png")
-            json_file = os.path.join(city_gt_dir, basename + "gtFine_polygons.json")
+            instance_file = os.path.join(city_gt_dir, basename + "gtFine_instanceIds.png") if gt_dir else None
+            label_file = os.path.join(city_gt_dir, basename + "gtFine_labelIds.png") if gt_dir else None
+            json_file = os.path.join(city_gt_dir, basename + "gtFine_polygons.json") if gt_dir else None
             depth_file = os.path.join(city_depth_dir, basename + "disparity.png") if city_depth_dir else None
 
             files.append((image_file, instance_file, label_file, json_file, depth_file))
@@ -266,6 +288,31 @@ def _cityscapes_files_to_dict(files, from_json, to_polygons):
             annos.append(anno)
     ret["annotations"] = annos
     return ret
+
+
+def _cityscapes_depth_files_to_dict(files):
+    """
+    Make a dictionary containing information for depth estimation training
+
+    Args:
+        files(tuple): consists of (image_file, instance_id_file, label_id_file, json_file)
+
+    Returns:
+        A dictionary containing information of a sample
+
+    """
+    image_file, _, _, _, depth_file = files
+
+    with PathManager.open(image_file, "rb") as f:
+        image = np.asarray(Image.open(f))
+
+    return {
+        "file_name": image_file,
+        "image_id": os.path.basename(image_file),
+        "height": image.shape[0],
+        "width": image.shape[1],
+        "depth_file": depth_file
+    }
 
 
 if __name__ == "__main__":

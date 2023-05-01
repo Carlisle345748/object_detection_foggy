@@ -4,9 +4,9 @@ import operator
 import torch.utils.data as torchdata
 from detectron2.data import DatasetFromList, MapDataset, get_detection_dataset_dicts, \
     DatasetMapper
-from detectron2.data.build import trivial_batch_collator, worker_init_reset_seed
+from detectron2.data.build import worker_init_reset_seed, trivial_batch_collator
 from detectron2.data.common import ToIterableDataset
-from detectron2.data.samplers import TrainingSampler, RepeatFactorTrainingSampler, RandomSubsetTrainingSampler
+from detectron2.data.samplers import RandomSubsetTrainingSampler, RepeatFactorTrainingSampler, TrainingSampler
 from detectron2.utils.comm import get_world_size
 
 from data.dataset_mapper import DetectionWithDepthDatasetMapper
@@ -24,8 +24,8 @@ def build_domain_adaptation_train_loader(cfg):
         domain object detection labels, source domain depth map, and target domain images
     """
     source_mapper = DetectionWithDepthDatasetMapper(cfg)
-    source = _train_dataset_from_config(cfg=cfg, dataset_name=cfg.DATASETS.TRAIN_SOURCE, mapper=source_mapper)
-    target = _train_dataset_from_config(cfg=cfg, dataset_name=cfg.DATASETS.TRAIN_TARGET)
+    source = train_dataset_from_config(cfg=cfg, dataset_name=cfg.DATASETS.TRAIN_SOURCE, mapper=source_mapper)
+    target = train_dataset_from_config(cfg=cfg, dataset_name=cfg.DATASETS.TRAIN_TARGET)
 
     return build_domain_adaptation_data_loader(
         source=source,
@@ -136,7 +136,42 @@ def build_dataloader(dataset, batch_size, aspect_ratio_grouping, num_workers):
         )
 
 
-def _train_dataset_from_config(cfg, *, dataset_name, mapper=None, sampler=None):
+def build_sampler(cfg, dataset):
+    """
+    Build a dataset sampler according to config
+
+    Args:
+        cfg: config
+        dataset: dataset to sample
+
+    Returns:
+        The dataset sampler
+    """
+    sampler_name = cfg.DATALOADER.SAMPLER_TRAIN
+    logger = logging.getLogger(__name__)
+    if isinstance(dataset, torchdata.IterableDataset):
+        logger.info("Not using any sampler since the dataset is IterableDataset.")
+        sampler = None
+    else:
+        logger.info("Using training sampler {}".format(sampler_name))
+        if sampler_name == "TrainingSampler":
+            sampler = TrainingSampler(len(dataset))
+        elif sampler_name == "RepeatFactorTrainingSampler":
+            repeat_factors = RepeatFactorTrainingSampler.repeat_factors_from_category_frequency(
+                dataset, cfg.DATALOADER.REPEAT_THRESHOLD
+            )
+            sampler = RepeatFactorTrainingSampler(repeat_factors)
+        elif sampler_name == "RandomSubsetTrainingSampler":
+            sampler = RandomSubsetTrainingSampler(
+                len(dataset), cfg.DATALOADER.RANDOM_SUBSET_RATIO
+            )
+        else:
+            raise ValueError("Unknown training sampler: {}".format(sampler_name))
+
+    return sampler
+
+
+def train_dataset_from_config(cfg, *, dataset_name, mapper=None, sampler=None):
     """
     Build a dataset from config
 
@@ -162,26 +197,7 @@ def _train_dataset_from_config(cfg, *, dataset_name, mapper=None, sampler=None):
         mapper = DatasetMapper(cfg)
 
     if sampler is None:
-        sampler_name = cfg.DATALOADER.SAMPLER_TRAIN
-        logger = logging.getLogger(__name__)
-        if isinstance(dataset, torchdata.IterableDataset):
-            logger.info("Not using any sampler since the dataset is IterableDataset.")
-            sampler = None
-        else:
-            logger.info("Using training sampler {}".format(sampler_name))
-            if sampler_name == "TrainingSampler":
-                sampler = TrainingSampler(len(dataset))
-            elif sampler_name == "RepeatFactorTrainingSampler":
-                repeat_factors = RepeatFactorTrainingSampler.repeat_factors_from_category_frequency(
-                    dataset, cfg.DATALOADER.REPEAT_THRESHOLD
-                )
-                sampler = RepeatFactorTrainingSampler(repeat_factors)
-            elif sampler_name == "RandomSubsetTrainingSampler":
-                sampler = RandomSubsetTrainingSampler(
-                    len(dataset), cfg.DATALOADER.RANDOM_SUBSET_RATIO
-                )
-            else:
-                raise ValueError("Unknown training sampler: {}".format(sampler_name))
+        sampler = build_sampler(cfg, dataset)
 
     # Transform list to dataset
     dataset = DatasetFromList(dataset)  # Build dataset from list
