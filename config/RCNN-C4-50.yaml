@@ -8,10 +8,11 @@ MODEL:
     BATCH_SIZE_PER_IMAGE: 256
     NUM_CLASSES: 8
 INPUT:
-  MIN_SIZE_TRAIN: (600,)
-  MAX_SIZE_TRAIN: 1200
-  MIN_SIZE_TEST: 600
-  MAX_SIZE_TEST: 1200
+  MIN_SIZE_TRAIN: (800, 832, 864, 896, 928, 960, 992, 1024)
+  MIN_SIZE_TRAIN_SAMPLING: "choice"
+  MIN_SIZE_TEST: 1024
+  MAX_SIZE_TRAIN: 2048
+  MAX_SIZE_TEST: 2048
 DATASETS:
   TRAIN: ("cityscapes_fine_instance_seg_train",)
   TEST: ("cityscapes_fine_instance_seg_val", "cityscapes_foggy_val")
