@@ -53,7 +53,7 @@ def register_domain_adaptation_dataset():
 
 def register_depth_dataset():
     dataset_dir = os.path.join(os.getcwd(), "datasets")
-    for dataset_name, dirs in DOMAIN_ADAPTATION_DATASETS.items():
+    for dataset_name, dirs in DEPTH_DATASETS.items():
         data_dir = []
         for d in dirs:
             data_dir.append(os.path.join(dataset_dir, d) if d else None)
