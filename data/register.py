@@ -18,6 +18,10 @@ DATASETS = {
 
 
 def register_dataset():
+    """
+    Register cityscapes and cityscapes_foggy dataset that built for semi-supervised learning
+    Add dataset "cityscapes_train", "cityscapes_val", "cityscapes_foggy_train", and "cityscapes_foggy_val"
+    """
     dataset_dir = os.path.join(os.getcwd(), "datasets")
     for dataset_name, dirs in DATASETS.items():
         data_dir = []

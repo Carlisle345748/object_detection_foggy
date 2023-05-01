@@ -14,10 +14,18 @@ from data.semi_supervise_dataset import SemiSupAspectRatioGroupedDataset, SemiSu
 
 
 def build_semi_supervised_detection_train_loader(cfg):
-    # TODO write mapper for source data to read in depth maps
+    """
+    Build a Semi-supervised learning dataloader
+
+    Args:
+        cfg: config
+    Returns:
+        A dataloader that return a batch of data. Each batch contains source domain images, source
+        domain object detection labels, source domain depth map, and target domain images
+    """
     source_mapper = DetectionWithDepthDatasetMapper(cfg)
-    source = _train_loader_from_config(cfg=cfg, dataset_name=cfg.DATASETS.TRAIN_SOURCE, mapper=source_mapper)
-    target = _train_loader_from_config(cfg=cfg, dataset_name=cfg.DATASETS.TRAIN_TARGET)
+    source = _train_dataset_from_config(cfg=cfg, dataset_name=cfg.DATASETS.TRAIN_SOURCE, mapper=source_mapper)
+    target = _train_dataset_from_config(cfg=cfg, dataset_name=cfg.DATASETS.TRAIN_TARGET)
 
     return build_semi_supervise_data_loader(
         source=source,
@@ -37,6 +45,21 @@ def build_semi_supervise_data_loader(
         aspect_ratio_grouping,
         num_workers
 ):
+    """
+    Build dataloader for semi-supervise learning
+
+    Args:
+        source (dict): a dictionary containing "dataset" and "sampler" of source dataset
+        target (dict): a dictionary containing "dataset" and "sampler" of target dataset
+        source_batch_size (int): batch size of source dataset
+        target_batch_size (int): batch size of target dataset
+        aspect_ratio_grouping (bool): whether to group data by aspect ratio
+        num_workers (int): number of worker for dataloader
+
+    Returns:
+        Dataloader for semi_supervise learning
+
+    """
     world_size = get_world_size()
     assert (
             source_batch_size > 0 and source_batch_size % world_size == 0
@@ -82,6 +105,18 @@ def build_semi_supervise_data_loader(
 
 
 def build_dataloader(dataset, batch_size, aspect_ratio_grouping, num_workers):
+    """
+    Builder a dataloader for a dataset
+
+    Args:
+        dataset: the dataset to load
+        batch_size (int): batch size for the dataset. Only used when aspect_ratio_grouping=False
+        aspect_ratio_grouping (bool): whether to group data by aspect ratio
+        num_workers (int): number of workers for dataloader
+
+    Returns:
+        A dataloader for the given dataset
+    """
     if aspect_ratio_grouping:
         data_loader = torchdata.DataLoader(
             dataset,
@@ -101,7 +136,19 @@ def build_dataloader(dataset, batch_size, aspect_ratio_grouping, num_workers):
         )
 
 
-def _train_loader_from_config(cfg, *, dataset_name, mapper=None, sampler=None):
+def _train_dataset_from_config(cfg, *, dataset_name, mapper=None, sampler=None):
+    """
+    Build a dataset from config
+
+    Args:
+        cfg: config
+        dataset_name: the name of the dataset
+        mapper: dataset mapper. if not given, build a mapper according to config
+        sampler: dataset sampler. If not given, build a sampler according to config
+
+    Returns:
+        A training dataset
+    """
     dataset = get_detection_dataset_dicts(
         dataset_name,
         filter_empty=cfg.DATALOADER.FILTER_EMPTY_ANNOTATIONS,

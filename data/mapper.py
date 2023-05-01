@@ -13,6 +13,9 @@ from trainer.config import add_teacher_student_config
 
 
 class DetectionWithDepthDatasetMapper(DatasetMapper):
+    """
+    Extend the Default DatasetMapper to load the depth map and apply augmentation to it
+    """
 
     def __call__(self, dataset_dict):
         """

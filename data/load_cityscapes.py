@@ -23,40 +23,6 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 
-def _get_cityscapes_files(image_dir: str, gt_dir: str, depth_dir: str = None, foggy=False):
-    files = []
-    # scan through the directory
-    cities = PathManager.ls(image_dir)
-    cities = [c for c in cities if c != ".DS_Store"]  # Remove macos system files
-    logger.info(f"{len(cities)} cities found in '{image_dir}'.")
-    for city in cities:
-        city_img_dir = os.path.join(image_dir, city)
-        city_gt_dir = os.path.join(gt_dir, city)
-        city_depth_dir = os.path.join(depth_dir, city) if depth_dir else None
-        for basename in PathManager.ls(city_img_dir):
-            image_file = os.path.join(city_img_dir, basename)
-
-            if foggy:
-                suffix = 'leftImg8bit_foggy'
-                basename = basename.split(suffix)[0]
-            else:
-                suffix = "leftImg8bit.png"
-                assert basename.endswith(suffix), basename
-                basename = basename[: -len(suffix)]
-
-            instance_file = os.path.join(city_gt_dir, basename + "gtFine_instanceIds.png")
-            label_file = os.path.join(city_gt_dir, basename + "gtFine_labelIds.png")
-            json_file = os.path.join(city_gt_dir, basename + "gtFine_polygons.json")
-            depth_file = os.path.join(city_depth_dir, basename + "disparity.png") if city_depth_dir else None
-
-            files.append((image_file, instance_file, label_file, json_file, depth_file))
-    assert len(files), "No images found in {}".format(image_dir)
-    for f in files[0]:
-        if f is not None:
-            assert PathManager.isfile(f), f
-    return files
-
-
 def load_cityscapes_instances(image_dir, gt_dir, depth_dir=None, from_json=True, to_polygons=True, foggy=False):
     """
     Args:
@@ -99,6 +65,51 @@ def load_cityscapes_instances(image_dir, gt_dir, depth_dir=None, from_json=True,
         for anno in dict_per_image["annotations"]:
             anno["category_id"] = dataset_id_to_contiguous_id[anno["category_id"]]
     return ret
+
+
+def _get_cityscapes_files(image_dir: str, gt_dir: str, depth_dir: str = None, foggy=False):
+    """
+        Group the files of each sample for cityscapes/cityscapes_foggy dataset
+    Args:
+        image_dir (str): image directory
+        gt_dir (str): label directory
+        depth_dir (str): depth map directory
+        foggy (bool): whether the dataset is a foggy dataset
+
+    Returns:
+        A list of tuple(filenames). Each tuple contains all files for a sample
+    """
+    files = []
+    # scan through the directory
+    cities = PathManager.ls(image_dir)
+    cities = [c for c in cities if c != ".DS_Store"]  # Remove macos system files
+    logger.info(f"{len(cities)} cities found in '{image_dir}'.")
+    for city in cities:
+        city_img_dir = os.path.join(image_dir, city)
+        city_gt_dir = os.path.join(gt_dir, city)
+        city_depth_dir = os.path.join(depth_dir, city) if depth_dir else None
+        for basename in PathManager.ls(city_img_dir):
+            image_file = os.path.join(city_img_dir, basename)
+
+            if foggy:
+                suffix = 'leftImg8bit_foggy'
+                basename = basename.split(suffix)[0]
+            else:
+                suffix = "leftImg8bit.png"
+                assert basename.endswith(suffix), basename
+                basename = basename[: -len(suffix)]
+
+            instance_file = os.path.join(city_gt_dir, basename + "gtFine_instanceIds.png")
+            label_file = os.path.join(city_gt_dir, basename + "gtFine_labelIds.png")
+            json_file = os.path.join(city_gt_dir, basename + "gtFine_polygons.json")
+            depth_file = os.path.join(city_depth_dir, basename + "disparity.png") if city_depth_dir else None
+
+            files.append((image_file, instance_file, label_file, json_file, depth_file))
+    assert len(files), "No images found in {}".format(image_dir)
+    for f in files[0]:
+        if f is not None:
+            assert PathManager.isfile(f), f
+    return files
 
 
 def _cityscapes_files_to_dict(files, from_json, to_polygons):

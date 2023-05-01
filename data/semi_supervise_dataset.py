@@ -34,13 +34,13 @@ class SemiSupAspectRatioGroupedDataset(data.IterableDataset):
 
     def __iter__(self):
         for s, t in zip(self.source, self.target):
-            # source
+            # source dataset
             sw, sh = s["width"], s["height"]
             s_bucket_id = 0 if sw > sh else 1
             s_bucket = self.source_bucket[s_bucket_id]
             s_bucket.append(s)
 
-            # target
+            # target dataset
             t.pop("instances")  # Remove annotations for target domain
             tw, th = t["width"], t["height"]
             t_bucket_id = 0 if tw > th else 1
