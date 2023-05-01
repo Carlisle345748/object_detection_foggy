@@ -1,7 +1,7 @@
 import torch.utils.data as data
 
 
-class SemiSupAspectRatioGroupedDataset(data.IterableDataset):
+class DAAspectRatioGroupedDataset(data.IterableDataset):
     """
     Batch data that have similar aspect ratio together.
     In this implementation, images whose aspect ratio < (or >) 1 will
@@ -62,7 +62,7 @@ class SemiSupAspectRatioGroupedDataset(data.IterableDataset):
                 yield batch
 
 
-class SemiSupGroupedDataset(data.IterableDataset):
+class DAGroupedDataset(data.IterableDataset):
     def __init__(self, source_dataloader, target_dataloader):
         """
         Args:

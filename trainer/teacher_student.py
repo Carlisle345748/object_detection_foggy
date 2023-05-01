@@ -9,7 +9,7 @@ from detectron2.evaluation import COCOEvaluator
 from detectron2.utils import comm
 from detectron2.utils.logger import setup_logger
 
-from data.train_dataloader import build_semi_supervised_detection_train_loader
+from data.domain_adaptation_dataloader import build_domain_adaptation_train_loader
 from model.EnsembleModel import EnsembleModel
 
 
@@ -63,5 +63,5 @@ class TeacherStudentTrainer(DefaultTrainer, ABC):
 
     @classmethod
     def build_train_loader(cls, cfg):
-        return build_semi_supervised_detection_train_loader(cfg)
+        return build_domain_adaptation_train_loader(cfg)
 

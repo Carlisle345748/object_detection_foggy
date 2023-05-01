@@ -9,13 +9,13 @@ from detectron2.data.common import ToIterableDataset
 from detectron2.data.samplers import TrainingSampler, RepeatFactorTrainingSampler, RandomSubsetTrainingSampler
 from detectron2.utils.comm import get_world_size
 
-from data.mapper import DetectionWithDepthDatasetMapper
-from data.semi_supervise_dataset import SemiSupAspectRatioGroupedDataset, SemiSupGroupedDataset
+from data.dataset_mapper import DetectionWithDepthDatasetMapper
+from data.domain_adaptation_dataset import DAAspectRatioGroupedDataset, DAGroupedDataset
 
 
-def build_semi_supervised_detection_train_loader(cfg):
+def build_domain_adaptation_train_loader(cfg):
     """
-    Build a Semi-supervised learning dataloader
+    Build a Domain Adaptation dataloader
 
     Args:
         cfg: config
@@ -27,7 +27,7 @@ def build_semi_supervised_detection_train_loader(cfg):
     source = _train_dataset_from_config(cfg=cfg, dataset_name=cfg.DATASETS.TRAIN_SOURCE, mapper=source_mapper)
     target = _train_dataset_from_config(cfg=cfg, dataset_name=cfg.DATASETS.TRAIN_TARGET)
 
-    return build_semi_supervise_data_loader(
+    return build_domain_adaptation_data_loader(
         source=source,
         target=target,
         source_batch_size=cfg.SOLVER.IMS_PER_BATCH_SOURCE,
@@ -37,7 +37,7 @@ def build_semi_supervised_detection_train_loader(cfg):
     )
 
 
-def build_semi_supervise_data_loader(
+def build_domain_adaptation_data_loader(
         source,
         target,
         source_batch_size,
@@ -46,7 +46,7 @@ def build_semi_supervise_data_loader(
         num_workers
 ):
     """
-    Build dataloader for semi-supervise learning
+    Build dataloader for Domain Adaptation
 
     Args:
         source (dict): a dictionary containing "dataset" and "sampler" of source dataset
@@ -57,7 +57,7 @@ def build_semi_supervise_data_loader(
         num_workers (int): number of worker for dataloader
 
     Returns:
-        Dataloader for semi_supervise learning
+        Dataloader for Domain Adaptation
 
     """
     world_size = get_world_size()
@@ -91,14 +91,14 @@ def build_semi_supervise_data_loader(
     )
 
     if aspect_ratio_grouping:
-        return SemiSupAspectRatioGroupedDataset(
+        return DAAspectRatioGroupedDataset(
             source_dataloader=source_dataloader,
             target_dataloader=target_dataloader,
             source_batch_size=source_batch_size,
             target_batch_size=target_batch_size
         )
     else:
-        return SemiSupGroupedDataset(
+        return DAGroupedDataset(
             source_dataloader=source_dataloader,
             target_dataloader=target_dataloader
         )
