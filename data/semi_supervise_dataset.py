@@ -41,6 +41,7 @@ class SemiSupAspectRatioGroupedDataset(data.IterableDataset):
             s_bucket.append(s)
 
             # target
+            t.pop("instances")  # Remove annotations for target domain
             tw, th = t["width"], t["height"]
             t_bucket_id = 0 if tw > th else 1
             t_bucket = self.target_bucket[t_bucket_id]
@@ -48,14 +49,14 @@ class SemiSupAspectRatioGroupedDataset(data.IterableDataset):
 
             if len(s_bucket) == self.source_batch_size and \
                     len(self.target_bucket[s_bucket_id]) == self.target_batch_size:
-                batch = [s_bucket[:], self.target_bucket[s_bucket_id][:]]
+                batch = (s_bucket[:], self.target_bucket[s_bucket_id][:])
                 del s_bucket[:]
                 del self.target_bucket[s_bucket_id][:]
                 yield batch
 
             if len(t_bucket) == self.target_batch_size and \
                     len(self.source_bucket[t_bucket_id]) == self.source_batch_size:
-                batch = [self.source_bucket[t_bucket_id][:], t_bucket[:]]
+                batch = (self.source_bucket[t_bucket_id][:], t_bucket[:])
                 del t_bucket[:]
                 del self.source_bucket[t_bucket_id][:]
                 yield batch
