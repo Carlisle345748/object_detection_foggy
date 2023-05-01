@@ -9,6 +9,8 @@ from detectron2.engine import default_argument_parser, launch, default_setup
 import data  # Import for side-effect
 
 from trainer.baseline import BaselineTrainer
+from trainer.config import add_teacher_student_config
+from trainer.teacher_student import TeacherStudentTrainer
 
 
 def show_version():
@@ -20,6 +22,7 @@ def show_version():
 
 def setup_config(args):
     cfg = get_cfg()
+    add_teacher_student_config(cfg)
     cfg.merge_from_file(args.config_file)
     cfg.merge_from_list(args.opts)
     cfg.freeze()
@@ -32,6 +35,12 @@ def train(cfg):
     trainer = BaselineTrainer(cfg)
     trainer.resume_or_load(resume=False)
     return trainer.train()
+
+
+def test_dataloader(cfg):
+    dataloader = TeacherStudentTrainer.build_train_loader(cfg)
+    for batch in dataloader:
+        print(batch)
 
 
 def evaluation(cfg):
@@ -47,12 +56,16 @@ def main(args):
     cfg = setup_config(args)
     if args.eval_only:
         evaluation(cfg)
+    elif args.test_dataloader:
+        test_dataloader(cfg)
     else:
         train(cfg)
 
 
 if __name__ == "__main__":
-    args = default_argument_parser().parse_args()
+    parser = default_argument_parser()
+    parser.add_argument("--test_dataloader", action="store_true")
+    args = parser.parse_args()
 
     print("Command Line Args:", args)
     launch(
@@ -63,4 +76,3 @@ if __name__ == "__main__":
         dist_url=args.dist_url,
         args=(args,),
     )
-

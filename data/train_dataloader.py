@@ -14,11 +14,11 @@ from data.mapper import DetectionWithDepthDatasetMapper
 from data.semi_supervise_dataset import SemiSupAspectRatioGroupedDataset, SemiSupGroupedDataset
 
 
-def build_detection_train_loader(cfg):
+def build_semi_supervised_detection_train_loader(cfg):
     # TODO write mapper for source data to read in depth maps
     source_mapper = DetectionWithDepthDatasetMapper(cfg)
-    source = _train_loader_from_config(cfg=cfg, dataset_name=cfg.DATASETS.TRAIN.SOURCE, mapper=source_mapper)
-    target = _train_loader_from_config(cfg=cfg, dataset_name=cfg.DATASETS.TRAIN.TARGET)
+    source = _train_loader_from_config(cfg=cfg, dataset_name=cfg.DATASETS.TRAIN_SOURCE, mapper=source_mapper)
+    target = _train_loader_from_config(cfg=cfg, dataset_name=cfg.DATASETS.TRAIN_TARGET)
 
     return build_semi_supervise_data_loader(
         source=source,
