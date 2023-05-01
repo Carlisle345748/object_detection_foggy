@@ -8,7 +8,6 @@ from detectron2.data.build import trivial_batch_collator, worker_init_reset_seed
 from detectron2.data.common import ToIterableDataset
 from detectron2.data.samplers import TrainingSampler, RepeatFactorTrainingSampler, RandomSubsetTrainingSampler
 from detectron2.utils.comm import get_world_size
-from detectron2.utils.logger import _log_api_usage
 
 from data.mapper import DetectionWithDepthDatasetMapper
 from data.semi_supervise_dataset import SemiSupAspectRatioGroupedDataset, SemiSupGroupedDataset
@@ -111,7 +110,6 @@ def _train_loader_from_config(cfg, *, dataset_name, mapper=None, sampler=None):
         else 0,
         proposal_files=cfg.DATASETS.PROPOSAL_FILES_TRAIN if cfg.MODEL.LOAD_PROPOSALS else None,
     )
-    _log_api_usage("dataset." + dataset_name)
 
     if mapper is None:
         mapper = DatasetMapper(cfg)
