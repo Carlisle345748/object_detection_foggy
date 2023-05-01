@@ -263,7 +263,9 @@ if __name__ == "__main__":
 
     Usage:
         python -m detectron2.data.datasets.cityscapes \
-            cityscapes/leftImg8bit/train cityscapes/gtFine/train
+            --image_dir cityscapes/leftImg8bit/val\
+            --gt_dir cityscapes/gtFine/val\
+            --depth_dir cityscapes/disparity/val
     """
     import argparse
 
