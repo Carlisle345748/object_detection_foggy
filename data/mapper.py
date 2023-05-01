@@ -9,6 +9,8 @@ from detectron2.data import DatasetMapper
 from detectron2.data import detection_utils as utils
 from detectron2.data import transforms as T
 
+from trainer.config import add_teacher_student_config
+
 
 class DetectionWithDepthDatasetMapper(DatasetMapper):
 
@@ -40,9 +42,7 @@ class DetectionWithDepthDatasetMapper(DatasetMapper):
         image, sem_seg_gt = aug_input.image, aug_input.sem_seg
 
         # Apply augmentation to depth map
-        aug_depth = T.AugInput(depth)
-        self.augmentations(aug_depth)
-        depth = aug_depth.image
+        depth = transforms.apply_image(depth)
 
         # Add depth map into data
         dataset_dict["depth"] = torch.as_tensor(np.ascontiguousarray(depth))
@@ -81,10 +81,11 @@ if __name__ == "__main__":
     Usage:
         python -m data.mapper 
     """
-    cwd = os.getcwd()
+    cwd = os.getcwd().removesuffix("/data")
     dataset_dir = os.path.join(os.getcwd(), "datasets")
 
     cfg = get_cfg()
+    add_teacher_student_config(cfg)
     cfg.merge_from_file(os.path.join(cwd, "config", "RCNN-C4-50.yaml"))
 
     img = Image.open(os.path.join(cwd, "datasets", "cityscapes", "disparity",
