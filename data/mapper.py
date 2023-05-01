@@ -1,7 +1,10 @@
 import copy
+import os
 
 import numpy as np
 import torch
+from PIL import Image
+from detectron2.config import get_cfg
 from detectron2.data import DatasetMapper
 from detectron2.data import detection_utils as utils
 from detectron2.data import transforms as T
@@ -22,6 +25,10 @@ class DetectionWithDepthDatasetMapper(DatasetMapper):
         image = utils.read_image(dataset_dict["file_name"], format=self.image_format)
         utils.check_image_size(dataset_dict, image)
 
+        # Read depth map
+        depth = utils.read_image(dataset_dict["depth_file"]).astype(np.float32)
+        utils.check_image_size(dataset_dict, depth)
+
         # USER: Remove if you don't do semantic/panoptic segmentation.
         if "sem_seg_file_name" in dataset_dict:
             sem_seg_gt = utils.read_image(dataset_dict.pop("sem_seg_file_name"), "L").squeeze(2)
@@ -31,6 +38,14 @@ class DetectionWithDepthDatasetMapper(DatasetMapper):
         aug_input = T.AugInput(image, sem_seg=sem_seg_gt)
         transforms = self.augmentations(aug_input)
         image, sem_seg_gt = aug_input.image, aug_input.sem_seg
+
+        # Apply augmentation to depth map
+        aug_depth = T.AugInput(depth)
+        self.augmentations(aug_depth)
+        depth = aug_depth.image
+
+        # Add depth map into data
+        dataset_dict["depth"] = torch.as_tensor(np.ascontiguousarray(depth))
 
         image_shape = image.shape[:2]  # h, w
         # Pytorch's dataloader is efficient on torch.Tensor due to shared-memory,
@@ -58,3 +73,30 @@ class DetectionWithDepthDatasetMapper(DatasetMapper):
 
         return dataset_dict
 
+
+if __name__ == "__main__":
+    """
+    Test the DatasetMapper on depth maps
+
+    Usage:
+        python -m data.mapper 
+    """
+    cwd = os.getcwd()
+    dataset_dir = os.path.join(os.getcwd(), "datasets")
+
+    cfg = get_cfg()
+    cfg.merge_from_file(os.path.join(cwd, "config", "RCNN-C4-50.yaml"))
+
+    img = Image.open(os.path.join(cwd, "datasets", "cityscapes", "disparity",
+                                  "train", "bremen", "bremen_000084_000019_disparity.png"))
+    image = np.asarray(img).astype(np.float32)
+    augs = utils.build_augmentation(cfg, True)
+    augs.insert(0, T.RandomCrop(cfg.INPUT.CROP.TYPE, cfg.INPUT.CROP.SIZE))
+    augmentations = T.AugmentationList(augs)
+
+    aug_input = T.AugInput(image)
+    transforms = augmentations(aug_input)
+    aug_img = Image.fromarray(aug_input.image)
+
+    img.show()
+    aug_img.show()
