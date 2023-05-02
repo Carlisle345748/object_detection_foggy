@@ -6,6 +6,9 @@ from detectron2.layers import ShapeSpec
 
 
 class Discriminator(nn.Module):
+    """
+    Domain discriminator for adverse learning. The default loss function is binary cross entropy loss
+    """
     def __init__(self, input_shape: ShapeSpec, loss: str = "bce"):
         super().__init__()
 
@@ -42,6 +45,9 @@ class GradReverseFunc(torch.autograd.Function):
 
 
 class GradReverseLayer(nn.Module):
+    """
+    Gradient reverse layer. The alpha is a scale factor after negating the gradient
+    """
     def __init__(self, alpha: float = 1.0):
         super().__init__()
         self.alpha = alpha
