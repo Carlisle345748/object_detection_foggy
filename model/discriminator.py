@@ -30,11 +30,21 @@ class Discriminator(nn.Module):
         return scores, loss
 
 
-class GradReverseLayer(torch.autograd.Function):
+class GradReverseFunc(torch.autograd.Function):
     @staticmethod
-    def forward(ctx: Any, x: torch.Tensor) -> torch.Tensor:
-        return x
+    def forward(ctx: Any, x: torch.Tensor, alpha: float) -> torch.Tensor:
+        ctx.alpha = alpha
+        return x.view_as(x)
 
     @staticmethod
     def backward(ctx: Any, grad_outputs: torch.Tensor) -> torch.Tensor:
-        return torch.neg(grad_outputs)
+        return grad_outputs.neg() * ctx.alpha
+
+
+class GradReverseLayer(nn.Module):
+    def __init__(self, alpha: float = 1.0):
+        super().__init__()
+        self.alpha = alpha
+
+    def forward(self, x):
+        return GradReverseFunc.apply(x, self.alpha)
