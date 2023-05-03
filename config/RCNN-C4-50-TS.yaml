@@ -1,7 +1,6 @@
 _BASE_: "./Base-RCNN-C4.yaml"
 MODEL:
   META_ARCHITECTURE: "TeacherStudentRCNN"
-  WEIGHTS: "detectron2://ImageNetPretrained/MSRA/R-50.pkl"
   MASK_ON: False
   RESNETS:
     DEPTH: 50
@@ -10,6 +9,7 @@ MODEL:
     NUM_CLASSES: 8
   TEACHER_STUDENT:
     BASE_ARCH: "GeneralizedRCNN"
+    WEIGHTS: "detectron2://ImageNetPretrained/MSRA/R-50.pkl"
 INPUT:
   MIN_SIZE_TRAIN: (800, 832, 864, 896, 928, 960, 992, 1024)
   MIN_SIZE_TRAIN_SAMPLING: "choice"
