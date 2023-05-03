@@ -9,6 +9,7 @@ from detectron2.engine import default_argument_parser, launch, default_setup
 import data  # Import for side-effect
 
 from trainer.baseline import BaselineTrainer
+from trainer.checkpointer import TeacherStudentCheckpointer
 from trainer.config import add_teacher_student_config
 from trainer.depth_trainer import DepthTrainer
 from trainer.teacher_student import TeacherStudentTrainer
@@ -49,8 +50,8 @@ def test_dataloader(cfg):
 
 
 def evaluation(cfg):
-    model = BaselineTrainer.build_model(cfg)
-    DetectionCheckpointer(model, save_dir=cfg.OUTPUT_DIR).resume_or_load(
+    model = TeacherStudentTrainer.build_model(cfg)
+    TeacherStudentCheckpointer(cfg, model, save_dir=cfg.OUTPUT_DIR).resume_or_load(
         os.path.join(cfg.OUTPUT_DIR, cfg.MODEL.WEIGHTS), resume=False
     )
     res = BaselineTrainer.test(cfg, model)
