@@ -6,8 +6,6 @@ import torch.nn as nn
 from detectron2.config import configurable
 from detectron2.modeling import GeneralizedRCNN, META_ARCH_REGISTRY
 from detectron2.structures import Instances
-from detectron2.utils import comm
-from torch.nn.parallel import DistributedDataParallel
 
 from model.discriminator import Discriminator
 
@@ -23,7 +21,7 @@ class TeacherStudentRCNN(nn.Module):
             student: GeneralizedRCNN,
             discriminator: Discriminator,
             backbone_out_feature: str,
-            teacher_update_step=1000,
+            teacher_update_step=10,
             confident_thresh=0.8,
             source_losses_weight=1,
             target_losses_weight=1,

@@ -24,6 +24,10 @@ class Discriminator(nn.Module):
         else:
             raise NotImplementedError(f"{loss} loss hasn't been implemented")
 
+        nn.init.kaiming_normal_(self.conv1.weight)
+        nn.init.kaiming_normal_(self.conv2.weight)
+        nn.init.kaiming_normal_(self.conv3.weight)
+
     def forward(self, x: torch.Tensor, y: int):
         x = self.grl(x)
         x = self.conv1(x)
