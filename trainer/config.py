@@ -13,3 +13,4 @@ def add_teacher_student_config(cfg):
 
     _C.MODEL.TEACHER_STUDENT = CN()
     _C.MODEL.TEACHER_STUDENT.BASE_ARCH = "GeneralizedRCNN"
+    _C.MODEL.TEACHER_STUDENT.WEIGHTS = "detectron2://ImageNetPretrained/MSRA/R-50.pkl"
