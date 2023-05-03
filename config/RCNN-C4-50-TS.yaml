@@ -9,7 +9,7 @@ MODEL:
     NUM_CLASSES: 8
   TEACHER_STUDENT:
     BASE_ARCH: "GeneralizedRCNN"
-    WEIGHTS: "detectron2://ImageNetPretrained/MSRA/R-50.pkl"
+    WEIGHTS: "output/cityscapes_baseline/model_final.pth"
 INPUT:
   MIN_SIZE_TRAIN: (800, 832, 864, 896, 928, 960, 992, 1024)
   MIN_SIZE_TRAIN_SAMPLING: "choice"
@@ -17,16 +17,16 @@ INPUT:
   MAX_SIZE_TRAIN: 2048
   MAX_SIZE_TEST: 2048
 DATASETS:
-  TRAIN: ("cityscapes_depth_val",)
-  TRAIN_SOURCE: ("cityscapes_val",)
-  TRAIN_TARGET: ("cityscapes_foggy_val",)
+  TRAIN: ("cityscapes_depth_train",)
+  TRAIN_SOURCE: ("cityscapes_train",)
+  TRAIN_TARGET: ("cityscapes_foggy_train",)
   TEST: ("cityscapes_fine_instance_seg_val", "cityscapes_foggy_val")
 SOLVER:
   BASE_LR: 0.001
   WEIGHT_DECAY: 0.0005
   STEPS: (50000,)
   MAX_ITER: 70000
-  IMS_PER_BATCH_SOURCE: 2
-  IMS_PER_BATCH_TARGET: 2
+  IMS_PER_BATCH_SOURCE: 4
+  IMS_PER_BATCH_TARGET: 4
 TEST:
   EVAL_PERIOD: 5000
