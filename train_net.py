@@ -10,6 +10,7 @@ import data  # Import for side-effect
 
 from trainer.baseline import BaselineTrainer
 from trainer.config import add_teacher_student_config
+from trainer.depth_trainer import DepthTrainer
 from trainer.teacher_student import TeacherStudentTrainer
 
 
@@ -38,9 +39,13 @@ def train(cfg):
 
 
 def test_dataloader(cfg):
-    dataloader = TeacherStudentTrainer.build_train_loader(cfg)
-    for batch in dataloader:
-        print(batch)
+    ts_dataloader = TeacherStudentTrainer.build_train_loader(cfg)
+    ts_dataloader_iter = iter(ts_dataloader)
+    print(next(ts_dataloader_iter))
+
+    depth_dataloader = DepthTrainer.build_train_loader(cfg)
+    depth_dataloader_it = iter(depth_dataloader)
+    print(next(depth_dataloader_it))
 
 
 def evaluation(cfg):
