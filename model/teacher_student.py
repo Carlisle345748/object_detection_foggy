@@ -61,6 +61,9 @@ class TeacherStudentRCNN(nn.Module):
         }
 
     def forward(self, batched_inputs):
+        if not self.training:
+            return self.inference(batched_inputs)
+
         if self.iter > 0 and self.iter % self.teacher_update_step == 0:
             self.update_teacher()
 
@@ -83,27 +86,7 @@ class TeacherStudentRCNN(nn.Module):
             detected_instances: Optional[List[Instances]] = None,
             do_postprocess: bool = True,
     ):
-        assert not self.training
-
-        images = self.student.preprocess_image(batched_inputs)
-        features = self.student.backbone(images.tensor)
-
-        if detected_instances is None:
-            if self.student.proposal_generator is not None:
-                proposals, _ = self.student.proposal_generator(images, features, None)
-            else:
-                assert "proposals" in batched_inputs[0]
-                proposals = [x["proposals"].to(self.student.device) for x in batched_inputs]
-
-            results, _ = self.student.roi_heads(images, features, proposals, None)
-        else:
-            detected_instances = [x.to(self.student.device) for x in detected_instances]
-            results = self.student.roi_heads.forward_with_given_boxes(features, detected_instances)
-
-        if do_postprocess:
-            assert not torch.jit.is_scripting(), "Scripting is not supported for postprocess."
-            return TeacherStudentRCNN._postprocess(results, batched_inputs, images.image_sizes)
-        return results
+        return self.student.inference(batched_inputs, detected_instances, do_postprocess)
 
     @torch.no_grad()
     def get_pseudo_label(self, batched_inputs):
