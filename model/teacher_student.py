@@ -66,7 +66,7 @@ class TeacherStudentRCNN(nn.Module):
         source_inputs, target_inputs = batched_inputs
 
         pseudo_labels = self.get_pseudo_label(target_inputs)
-        target_inputs = self.add_pseudo_labels(target_inputs, pseudo_labels)
+        target_inputs = self.add_pseudo_labels(target_inputs, pseudo_labels["roi"])
 
         source_losses = self.student_forward(source_inputs, self.SOURCE_LABEL)
         target_losses = self.student_forward(target_inputs, self.TARGET_LABEL)
