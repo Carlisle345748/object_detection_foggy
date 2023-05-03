@@ -23,7 +23,9 @@ class TeacherStudentCheckpointer(DetectionCheckpointer):
             return self.load(meta_model_weight, checkpointables=[])
 
         assert isinstance(self.model, TeacherStudentRCNN), "Model must be TeacherStudentRCNN"
-        assert self.base_model_weight, "Base model weight is not provided"
+
+        if not self.base_model_weight:
+            return
 
         # Temporary replace the model
         meta_model = self.model

@@ -59,7 +59,7 @@ class TeacherStudentRCNN(nn.Module):
         }
 
     def forward(self, batched_inputs):
-        if self.iter % self.teacher_update_step == 0:
+        if self.iter > 0 and self.iter % self.teacher_update_step == 0:
             self.update_teacher()
 
         source_inputs, target_inputs = batched_inputs
@@ -162,9 +162,8 @@ class TeacherStudentRCNN(nn.Module):
 
     def update_teacher(self, keep=0.999):
         if comm.get_world_size() > 1:
-            # TODO verify key[7:] magic in parallel training
             student_dict = {
-                key[7:]: value for key, value in self.student.state_dict().items()
+                key.removeprefix("module."): value for key, value in self.student.state_dict().items()
             }
         else:
             student_dict = self.student.state_dict()
@@ -176,4 +175,4 @@ class TeacherStudentRCNN(nn.Module):
             else:
                 raise Exception(f"{key} is not found in student model")
 
-        self.model_teacher.load_state_dict(new_teacher_dict)
+        self.teacher.load_state_dict(new_teacher_dict)
