@@ -23,7 +23,7 @@ class Discriminator(nn.Module):
         else:
             raise NotImplementedError(f"{loss} loss hasn't been implemented")
 
-    def forward(self, x, y):
+    def forward(self, x: torch.Tensor, y: int):
         x = self.grl(x)
         x = self.conv1(x)
         x = self.leaky_relu(x)
@@ -31,9 +31,10 @@ class Discriminator(nn.Module):
         x = self.leaky_relu(x)
         x = self.conv3(x)
         x = self.leaky_relu(x)
-        scores = self.classifier(x)
-        loss = self.loss(x, y)
-        return scores, loss
+        x = self.classifier(x)
+
+        labels = (torch.ones_like(x) * y).to(x.device)
+        return {"discriminator_loss": self.loss(x, labels)}
 
 
 class GradReverseFunc(torch.autograd.Function):
