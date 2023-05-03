@@ -9,3 +9,5 @@ def add_teacher_student_config(cfg):
 
     _C.DATASETS.TRAIN_SOURCE = ("coco_2017_train",)
     _C.DATASETS.TRAIN_TARGET = ("coco_2017_train",)
+
+    _C.MODEL.TEACHER_STUDENT.BASE_ARCH = "GeneralizedRCNN"

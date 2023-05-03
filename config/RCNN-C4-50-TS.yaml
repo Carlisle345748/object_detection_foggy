@@ -1,5 +1,6 @@
 _BASE_: "./Base-RCNN-C4.yaml"
 MODEL:
+  META_ARCHITECTURE: "TeacherStudentRCNN"
   WEIGHTS: "detectron2://ImageNetPretrained/MSRA/R-50.pkl"
   MASK_ON: False
   RESNETS:
@@ -7,6 +8,8 @@ MODEL:
   ROI_HEADS:
     BATCH_SIZE_PER_IMAGE: 256
     NUM_CLASSES: 8
+  TEACHER_STUDENT:
+    BASE_ARCH: "GeneralizedRCNN"
 INPUT:
   MIN_SIZE_TRAIN: (800, 832, 864, 896, 928, 960, 992, 1024)
   MIN_SIZE_TRAIN_SAMPLING: "choice"
@@ -14,6 +17,7 @@ INPUT:
   MAX_SIZE_TRAIN: 2048
   MAX_SIZE_TEST: 2048
 DATASETS:
+  TRAIN: ("cityscapes_depth_val",)
   TRAIN_SOURCE: ("cityscapes_val",)
   TRAIN_TARGET: ("cityscapes_foggy_val",)
   TEST: ("cityscapes_fine_instance_seg_val", "cityscapes_foggy_val")
