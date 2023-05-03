@@ -7,6 +7,7 @@ from detectron2.config import configurable
 from detectron2.modeling import GeneralizedRCNN, META_ARCH_REGISTRY
 from detectron2.structures import Instances
 from detectron2.utils import comm
+from torch.nn.parallel import DistributedDataParallel
 
 from model.discriminator import Discriminator
 
@@ -161,13 +162,7 @@ class TeacherStudentRCNN(nn.Module):
         return losses
 
     def update_teacher(self, keep=0.999):
-        if comm.get_world_size() > 1:
-            student_dict = {
-                key.removeprefix("module."): value for key, value in self.student.state_dict().items()
-            }
-        else:
-            student_dict = self.student.state_dict()
-
+        student_dict = self.student.state_dict()
         new_teacher_dict = OrderedDict()
         for key, value in self.teacher.state_dict().items():
             if key in student_dict.keys():
