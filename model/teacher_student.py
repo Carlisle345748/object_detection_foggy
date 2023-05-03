@@ -50,7 +50,7 @@ class TeacherStudentRCNN(nn.Module):
 
         assert len(cfg.MODEL.RESNETS.OUT_FEATURES) == 1, "feature map produced by backbone should has one layer"
         backbone_out_feature = cfg.MODEL.RESNETS.OUT_FEATURES[0]
-        discriminator = Discriminator(student_model.backbone.output_shape[backbone_out_feature])
+        discriminator = Discriminator(student_model.backbone.output_shape()[backbone_out_feature])
 
         return {
             "teacher": teacher_model,

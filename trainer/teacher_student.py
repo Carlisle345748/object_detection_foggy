@@ -1,5 +1,6 @@
 import os
 from abc import ABC
+import model.teacher_student  # Import for registering models
 
 from detectron2.engine import DefaultTrainer
 from detectron2.evaluation import COCOEvaluator

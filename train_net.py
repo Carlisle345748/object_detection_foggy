@@ -33,7 +33,7 @@ def setup_config(args):
 
 def train(cfg):
     os.makedirs(cfg.OUTPUT_DIR, exist_ok=True)
-    trainer = BaselineTrainer(cfg)
+    trainer = TeacherStudentTrainer(cfg)
     trainer.resume_or_load(resume=False)
     return trainer.train()
 
