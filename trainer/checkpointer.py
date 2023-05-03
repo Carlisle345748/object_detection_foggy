@@ -9,7 +9,7 @@ class TeacherStudentCheckpointer(DetectionCheckpointer):
     def __init__(self, cfg, model, save_dir="", *, save_to_disk=None, **checkpointables):
         super().__init__(model=model, save_dir=save_dir, save_to_disk=save_to_disk, **checkpointables)
 
-        self.base_model_weight = cfg.MODEL.TEACHER_STUDENT.WEIGHT
+        self.base_model_weight = cfg.MODEL.TEACHER_STUDENT.WEIGHTS
 
     def resume_or_load(self, path: str, *, resume: bool = True) -> Dict[str, Any]:
         if resume and self.has_checkpoint():
