@@ -1,10 +1,10 @@
 from collections import OrderedDict
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 import torch
 import torch.nn as nn
 from detectron2.config import configurable
-from detectron2.modeling import GeneralizedRCNN, META_ARCH_REGISTRY
+from detectron2.modeling import GeneralizedRCNN, META_ARCH_REGISTRY, detector_postprocess
 from detectron2.structures import Instances
 
 from model.discriminator import Discriminator
@@ -76,6 +76,34 @@ class TeacherStudentRCNN(nn.Module):
         self.iter += 1
 
         return losses
+
+    def inference(
+            self,
+            batched_inputs: List[Dict[str, torch.Tensor]],
+            detected_instances: Optional[List[Instances]] = None,
+            do_postprocess: bool = True,
+    ):
+        assert not self.training
+
+        images = self.student.preprocess_image(batched_inputs)
+        features = self.student.backbone(images.tensor)
+
+        if detected_instances is None:
+            if self.student.proposal_generator is not None:
+                proposals, _ = self.student.proposal_generator(images, features, None)
+            else:
+                assert "proposals" in batched_inputs[0]
+                proposals = [x["proposals"].to(self.student.device) for x in batched_inputs]
+
+            results, _ = self.student.roi_heads(images, features, proposals, None)
+        else:
+            detected_instances = [x.to(self.student.device) for x in detected_instances]
+            results = self.student.roi_heads.forward_with_given_boxes(features, detected_instances)
+
+        if do_postprocess:
+            assert not torch.jit.is_scripting(), "Scripting is not supported for postprocess."
+            return TeacherStudentRCNN._postprocess(results, batched_inputs, images.image_sizes)
+        return results
 
     @torch.no_grad()
     def get_pseudo_label(self, batched_inputs):
@@ -157,6 +185,8 @@ class TeacherStudentRCNN(nn.Module):
             losses[f"source_{key}"] = loss * weight
 
         for key, loss in target_losses.items():
+            if key.endswith("box_reg") or key.endswith("rpn_loc"):
+                continue
             weight = self.discriminator_losses_weight if key.startswith("discriminator") else self.target_losses_weight
             losses[f"target_{key}"] = loss * weight
 
@@ -172,3 +202,19 @@ class TeacherStudentRCNN(nn.Module):
                 raise Exception(f"{key} is not found in student model")
 
         self.teacher.load_state_dict(new_teacher_dict)
+
+    @staticmethod
+    def _postprocess(instances, batched_inputs: List[Dict[str, torch.Tensor]], image_sizes):
+        """
+        Rescale the output instances to the target size.
+        """
+        # note: private function; subject to changes
+        processed_results = []
+        for results_per_image, input_per_image, image_size in zip(
+                instances, batched_inputs, image_sizes
+        ):
+            height = input_per_image.get("height", image_size[0])
+            width = input_per_image.get("width", image_size[1])
+            r = detector_postprocess(results_per_image, height, width)
+            processed_results.append({"instances": r})
+        return processed_results
