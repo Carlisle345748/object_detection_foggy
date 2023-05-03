@@ -14,6 +14,7 @@ class Discriminator(nn.Module):
     def __init__(self, input_shape: ShapeSpec, loss: str = "bce", alpha: float = 1.0):
         super().__init__()
         self.grl = GradReverseLayer(alpha=alpha)
+        self.leaky_relu = nn.LeakyReLU(negative_slope=0.2)
         self.conv1 = nn.Conv2d(input_shape.channels, 256, kernel_size=3, padding=1)
         self.conv2 = nn.Conv2d(256, 128, kernel_size=3, padding=1)
         self.conv3 = nn.Conv2d(128, 128, kernel_size=3, padding=1)
@@ -45,7 +46,7 @@ class GradReverseFunc(torch.autograd.Function):
 
     @staticmethod
     def backward(ctx: Any, grad_outputs: torch.Tensor) -> torch.Tensor:
-        return grad_outputs.neg() * ctx.alpha
+        return grad_outputs.neg() * ctx.alpha, None
 
 
 class GradReverseLayer(nn.Module):

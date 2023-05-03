@@ -22,6 +22,7 @@ class TeacherStudentRCNN(nn.Module):
             teacher: GeneralizedRCNN,
             student: GeneralizedRCNN,
             discriminator: Discriminator,
+            backbone_out_feature: str,
             teacher_update_step=1000,
             confident_thresh=0.8,
             source_losses_weight=1,
@@ -32,6 +33,7 @@ class TeacherStudentRCNN(nn.Module):
         self.student = student
         self.teacher = teacher
         self.discriminator = discriminator
+        self.backbone_out_feature = backbone_out_feature
         self.teacher_update_step = teacher_update_step
 
         self.SOURCE_LABEL = 0
@@ -57,6 +59,7 @@ class TeacherStudentRCNN(nn.Module):
             "teacher": teacher_model,
             "student": student_model,
             "discriminator": discriminator,
+            "backbone_out_feature": backbone_out_feature
         }
 
     def forward(self, batched_inputs):
@@ -111,7 +114,7 @@ class TeacherStudentRCNN(nn.Module):
 
         features = self.student.backbone(images.tensor)
 
-        discriminator_losses = self.discriminator(features, discriminator_label)
+        discriminator_losses = self.discriminator(features[self.backbone_out_feature], discriminator_label)
 
         if self.student.proposal_generator is not None:
             proposals, proposal_losses = self.student.proposal_generator(images, features, gt_instances)
