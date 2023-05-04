@@ -175,7 +175,7 @@ class TeacherStudentRCNN(nn.Module):
 
         return losses
 
-    def update_teacher(self, keep=0.999):
+    def update_teacher(self, keep=0.9996):
         student_dict = self.student.state_dict()
         new_teacher_dict = OrderedDict()
         for key, value in self.teacher.state_dict().items():
