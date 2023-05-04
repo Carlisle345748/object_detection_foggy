@@ -10,6 +10,7 @@ from detectron2.utils.logger import setup_logger
 
 from data.domain_adaptation_dataloader import build_domain_adaptation_train_loader
 from trainer.checkpointer import TeacherStudentCheckpointer
+from trainer.grad_monitor import GradMonitor
 
 
 class TeacherStudentTrainer(DefaultTrainer, ABC):
@@ -43,6 +44,7 @@ class TeacherStudentTrainer(DefaultTrainer, ABC):
         self.cfg = cfg
 
         self.register_hooks(self.build_hooks())
+        self.register_hooks([GradMonitor(model)])
 
     @classmethod
     def build_evaluator(cls, cfg, dataset_name):
