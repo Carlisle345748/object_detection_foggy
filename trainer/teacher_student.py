@@ -30,6 +30,7 @@ class TeacherStudentTrainer(DefaultTrainer, ABC):
         self._trainer = (AMPTrainer if cfg.SOLVER.AMP.ENABLED else SimpleTrainer)(
             model, data_loader, optimizer
         )
+        self._trainer.register_hooks([GradMonitor(model)])
 
         self.scheduler = self.build_lr_scheduler(cfg, optimizer)
         self.checkpointer = TeacherStudentCheckpointer(
@@ -44,7 +45,6 @@ class TeacherStudentTrainer(DefaultTrainer, ABC):
         self.cfg = cfg
 
         self.register_hooks(self.build_hooks())
-        self.register_hooks([GradMonitor(model)])
 
     @classmethod
     def build_evaluator(cls, cfg, dataset_name):
