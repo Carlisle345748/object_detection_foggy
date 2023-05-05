@@ -23,7 +23,7 @@ fi
 
 if [ ! -d "datasets/disparity" ]; then
     download_and_unzip disparity disparity_trainvaltest.zip
-    mv datasets/disparity datasets/cityscapes/disparity
+    mv datasets/disparity/disparity datasets/cityscapes/disparity
 fi
 
 if [ ! -d "datasets/cityscapes_foggy/leftImg8bit" ]; then
