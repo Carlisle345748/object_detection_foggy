@@ -57,7 +57,10 @@ class TeacherStudentRCNN(nn.Module):
             "teacher": teacher_model,
             "student": student_model,
             "discriminator": discriminator,
-            "backbone_out_feature": backbone_out_feature
+            "backbone_out_feature": backbone_out_feature,
+            "source_losses_weight": cfg.MODEL.TEACHER_STUDENT.SOURCE_WEIGHT,
+            "target_losses_weight": cfg.MODEL.TEACHER_STUDENT.TARGET_WEIGHT,
+            "discriminator_losses_weight": cfg.MODEL.TEACHER_STUDENT.DIS_WEIGHT
         }
 
     def forward(self, batched_inputs):
