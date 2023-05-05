@@ -21,7 +21,7 @@
             "console": "integratedTerminal",
             "justMyCode": false,
             "args": ["--eval-only", "--num-gpus", "1", "--config", "config/RCNN-C4-50-TS.yaml", 
-                "OUTPUT_DIR", "output/cityscapes_teacher_student", "MODEL.WEIGHTS", "model_0009999.pth"]
+                "OUTPUT_DIR", "output/cityscapes_baseline"]
         },
     ]
 }
