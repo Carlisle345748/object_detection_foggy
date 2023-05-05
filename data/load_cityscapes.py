@@ -21,6 +21,7 @@ except ImportError:
     pass
 
 logger = logging.getLogger(__name__)
+logger.parent = logging.getLogger('detectron2')
 
 
 def load_cityscapes_instances(image_dir, gt_dir, depth_dir=None, from_json=True, to_polygons=True, foggy=False):

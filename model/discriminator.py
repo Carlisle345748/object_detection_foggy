@@ -14,28 +14,50 @@ class Discriminator(nn.Module):
     def __init__(self, input_shape: ShapeSpec, loss: str = "bce", alpha: float = 1.0):
         super().__init__()
         self.grl = GradReverseLayer(alpha=alpha)
-        self.leaky_relu = nn.LeakyReLU(negative_slope=0.2)
-        self.conv1 = nn.Conv2d(input_shape.channels, 256, kernel_size=3, padding=1)
-        self.conv2 = nn.Conv2d(256, 128, kernel_size=3, padding=1)
-        self.conv3 = nn.Conv2d(128, 128, kernel_size=3, padding=1)
-        self.classifier = nn.Conv2d(128, 1, kernel_size=3, padding=1)
+
+        self.block1 = nn.Sequential(
+            nn.Conv2d(input_shape.channels, 256, kernel_size=3, padding=1),
+            nn.GroupNorm(num_groups=4, num_channels=256),
+            nn.LeakyReLU(),
+        )
+
+        self.block2 = nn.Sequential(
+            nn.Conv2d(256, 128, kernel_size=3, padding=1),
+            nn.GroupNorm(num_groups=2, num_channels=128),
+            nn.LeakyReLU(),
+        )
+
+        self.block3 = nn.Sequential(
+            nn.Conv2d(128, 128, kernel_size=3, padding=1),
+            nn.GroupNorm(num_groups=2, num_channels=128),
+            nn.LeakyReLU(),
+        )
+
+        self.classifier = nn.Sequential(
+            nn.Conv2d(128, 1, kernel_size=3, padding=1),
+            nn.Flatten()
+        )
+
         if loss == "bce":
             self.loss = nn.BCEWithLogitsLoss()
         else:
             raise NotImplementedError(f"{loss} loss hasn't been implemented")
 
-        nn.init.kaiming_normal_(self.conv1.weight)
-        nn.init.kaiming_normal_(self.conv2.weight)
-        nn.init.kaiming_normal_(self.conv3.weight)
+        self.block1.apply(self.init_weights)
+        self.block2.apply(self.init_weights)
+        self.block3.apply(self.init_weights)
+
+    @classmethod
+    @torch.no_grad()
+    def init_weights(cls, model):
+        if type(model) == nn.Conv2d:
+            nn.init.kaiming_normal_(model.weight.data)
 
     def forward(self, x: torch.Tensor, y: int):
         x = self.grl(x)
-        x = self.conv1(x)
-        x = self.leaky_relu(x)
-        x = self.conv2(x)
-        x = self.leaky_relu(x)
-        x = self.conv3(x)
-        x = self.leaky_relu(x)
+        x = self.block1(x)
+        x = self.block2(x)
+        x = self.block3(x)
         x = self.classifier(x)
 
         labels = (torch.ones_like(x) * y).to(x.device)
