@@ -24,11 +24,6 @@ class TeacherStudentTrainer(DefaultTrainer, ABC):
 
         # Assume these objects must be constructed in this order.
         model = self.build_model(cfg)
-
-        if torch.version.__version__ == "2.0.0":
-            logger.info("try to compile model")
-            model = torch.compile(model)
-
         optimizer = self.build_optimizer(cfg, model)
         data_loader = self.build_train_loader(cfg)
 
