@@ -29,7 +29,6 @@ class Discriminator(nn.Module):
 
         self.block3 = nn.Sequential(
             nn.Conv2d(128, 128, kernel_size=3, padding=1),
-            nn.BatchNorm2d(128),
             nn.GroupNorm(num_groups=2, num_channels=128),
             nn.LeakyReLU(),
         )
