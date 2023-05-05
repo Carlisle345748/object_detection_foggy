@@ -1,4 +1,7 @@
 #! /usr/bin/bash
+
+apt update
+
 apt install zip unzip
 
 python3 -m pip install cityscapesscripts
