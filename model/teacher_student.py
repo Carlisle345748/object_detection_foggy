@@ -1,3 +1,4 @@
+import logging
 from collections import OrderedDict
 from typing import List, Dict, Optional
 
@@ -5,6 +6,8 @@ import torch
 import torch.nn as nn
 from detectron2.config import configurable
 from detectron2.modeling import GeneralizedRCNN, META_ARCH_REGISTRY, detector_postprocess
+from detectron2.modeling.proposal_generator import RPN
+from detectron2.modeling.roi_heads import Res5ROIHeads
 from detectron2.structures import Instances
 
 from model.discriminator import Discriminator
@@ -204,3 +207,26 @@ class TeacherStudentRCNN(nn.Module):
             r = detector_postprocess(results_per_image, height, width)
             processed_results.append({"instances": r})
         return processed_results
+
+    def maybe_compile(self):
+        logger = logging.getLogger(__name__)
+        logger.parent = logging.getLogger('detectron2')
+        if torch.version.__version__.startswith("2"):
+            self.student = self._compile_base_model(self.student)
+            self.teacher = self._compile_base_model(self.teacher)
+            self.discriminator = torch.compile(self.discriminator)
+            logger.info("Compile model success")
+        else:
+            logger.info(f"Torch compile only support version > 2. Current version f{torch.version.__version__}")
+
+    @classmethod
+    def _compile_base_model(cls, model: GeneralizedRCNN):
+        model.backbone = torch.compile(model.backbone)
+        assert isinstance(model.proposal_generator, RPN)
+        model.proposal_generator.rpn_head = torch.compile(model.proposal_generator.rpn_head)
+        model.proposal_generator.anchor_generator = torch.compile(model.proposal_generator.anchor_generator)
+        assert isinstance(model.roi_heads, Res5ROIHeads)
+        model.roi_heads.pooler = torch.compile(model.roi_heads.pooler)
+        model.roi_heads.res5 = torch.compile(model.roi_heads.res5)
+        model.roi_heads.box_predictor = torch.compile(model.roi_heads.box_predictor)
+        return model

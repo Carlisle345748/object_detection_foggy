@@ -41,4 +41,7 @@ class TeacherStudentCheckpointer(DetectionCheckpointer):
         # Resume the model
         self.model = meta_model
 
+        # Compile the model
+        self.model.maybe_compile()
+
         return ret

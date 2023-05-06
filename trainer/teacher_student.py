@@ -3,13 +3,13 @@ import os
 import weakref
 from abc import ABC
 
-import torch
 from detectron2.engine import DefaultTrainer, create_ddp_model, AMPTrainer, SimpleTrainer
 from detectron2.evaluation import COCOEvaluator
 from detectron2.utils import comm
 from detectron2.utils.logger import setup_logger
 
 from data.domain_adaptation_dataloader import build_domain_adaptation_train_loader
+from model.teacher_student import TeacherStudentRCNN
 from trainer.checkpointer import TeacherStudentCheckpointer
 from trainer.grad_monitor import GradMonitor
 
