@@ -71,7 +71,7 @@ class ResnetDEB(nn.Module):
         Normalize, pad and batch the input images.
         attr_name: "image" for preprocess images, "depth" for preprocessing depth maps.
         """
-        images = [x[attr_name].to(self.device) for x in batched_inputs]
+        images = [x[attr_name].to(self.device, dtype=torch.float32) for x in batched_inputs]
         images = ImageList.from_tensors(
             images,
             self.backbone.size_divisibility,
