@@ -35,7 +35,7 @@ class DEB(nn.Module):
         depth_map = self.deb(x)
 
         _, _, h1, w1 = depth_map.size()
-        _, _, h, w = gt_depth_map.size()
+        _, h, w = gt_depth_map.size()    # N * (1) * H * W
         if h1 != h or w1 != w:
             gt_depth_map = torch.nn.Upsample(size=(h1, w1), mode='bilinear')(gt_depth_map)
 
