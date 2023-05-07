@@ -7,6 +7,8 @@ from detectron2.evaluation import COCOEvaluator
 
 from data.dataset_mapper import DepthDatasetMapper
 
+import model.resnet_deb # Import for side effect
+
 
 class DepthTrainer(DefaultTrainer, ABC):
 
