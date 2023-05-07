@@ -56,7 +56,7 @@ class ResnetDEB(nn.Module):
         images = self.preprocess_inputs(batched_inputs, "image")
         features = self.backbone(images.tensor)
         gt_depth = self.preprocess_inputs(batched_inputs, "depth")
-        losses, _ = self.depth_estimation(features[self.backbone_out_feature], gt_depth)
+        losses, _ = self.depth_estimation(features[self.backbone_out_feature], gt_depth.tensor)
         return losses
 
     def inference(self, batched_inputs: List[Dict[str, torch.Tensor]],
