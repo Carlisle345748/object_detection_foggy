@@ -39,6 +39,13 @@ def train(cfg):
     return trainer.train()
 
 
+def train_depth(cfg):
+    os.makedirs(cfg.OUTPUT_DIR, exist_ok=True)
+    trainer = DepthTrainer(cfg)
+    trainer.resume_or_load(resume=False)
+    return trainer.train()
+
+
 def test_dataloader(cfg):
     ts_dataloader = TeacherStudentTrainer.build_train_loader(cfg)
     ts_dataloader_iter = iter(ts_dataloader)
@@ -64,6 +71,8 @@ def main(args):
         evaluation(cfg)
     elif args.test_dataloader:
         test_dataloader(cfg)
+    elif args.depth:
+        train_depth(cfg)
     else:
         train(cfg)
 
@@ -71,6 +80,7 @@ def main(args):
 if __name__ == "__main__":
     parser = default_argument_parser()
     parser.add_argument("--test_dataloader", action="store_true")
+    parser.add_argument("--depth", action="store_true")
     args = parser.parse_args()
 
     print("Command Line Args:", args)
