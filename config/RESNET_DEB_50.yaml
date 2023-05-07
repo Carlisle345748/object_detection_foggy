@@ -17,7 +17,7 @@ INPUT:
   MAX_SIZE_TRAIN: 2048
   MAX_SIZE_TEST: 2048
 DATASETS:
-  TRAIN: ("cityscapes_depth_val",)
+  TRAIN: ("cityscapes_depth_train",)
   TEST: ("cityscapes_depth_val",)
 SOLVER:
   BASE_LR: 0.001
