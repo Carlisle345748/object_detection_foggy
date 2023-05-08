@@ -1,18 +1,17 @@
-import os
 from abc import ABC
 
 from detectron2.data import build_detection_train_loader
 from detectron2.engine import DefaultTrainer
-from detectron2.evaluation import COCOEvaluator
 
 from data.dataset_mapper import DepthDatasetMapper
+from trainer.depth_evaluator import DepthEvaluator
 
 
 class DepthTrainer(DefaultTrainer, ABC):
 
     @classmethod
     def build_evaluator(cls, cfg, dataset_name):
-        return [COCOEvaluator(dataset_name, tasks=("bbox",), output_dir=os.path.join(cfg.OUTPUT_DIR, "inference"))]
+        return [DepthEvaluator()]
 
     @classmethod
     def build_train_loader(cls, cfg):
