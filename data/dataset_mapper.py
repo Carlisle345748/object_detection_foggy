@@ -127,5 +127,17 @@ def test_augmentation():
     aug_img.show()
 
 
+def test_normalize():
+    cwd = os.getcwd().removesuffix("/data")
+    img = Image.open(os.path.join(cwd, "datasets", "cityscapes", "disparity",
+                                  "train", "bremen", "bremen_000084_000019_disparity.png"))
+    img.show()
+    image = np.asarray(img).astype(np.float32)
+    image = torch.nn.functional.interpolate(torch.from_numpy(image).resize(1, 1, 1024, 2048), (60, 120))
+    image = torch.nn.functional.interpolate(image, (1024, 2048))
+    aug_img = Image.fromarray(image.resize(1024, 2048).numpy())
+    aug_img.show()
+
+
 if __name__ == "__main__":
-    test_augmentation()
+    test_normalize()
