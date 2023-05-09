@@ -1,8 +1,10 @@
+import logging
 from typing import Any
 
 import torch
 import torch.nn as nn
 from detectron2.layers import ShapeSpec
+from fvcore.nn import sigmoid_focal_loss_jit
 
 
 class Discriminator(nn.Module):
@@ -11,9 +13,13 @@ class Discriminator(nn.Module):
     The discriminator has built-in gradient reverse layer
     """
 
-    def __init__(self, input_shape: ShapeSpec, loss: str = "bce", alpha: float = 1.0):
+    def __init__(self, input_shape: ShapeSpec, loss: str = "bce", alpha=0.25, gamma=2.0):
         super().__init__()
-        self.grl = GradReverseLayer(alpha=alpha)
+
+        logger = logging.getLogger(__name__)
+        logger.parent = logging.getLogger('detectron2')
+
+        self.grl = GradReverseLayer()
 
         self.block1 = nn.Sequential(
             nn.Conv2d(input_shape.channels, 256, kernel_size=3, padding=1),
@@ -38,8 +44,11 @@ class Discriminator(nn.Module):
             nn.Flatten()
         )
 
+        logger.info(f"Discriminator use {loss} loss")
         if loss == "bce":
             self.loss = nn.BCEWithLogitsLoss()
+        elif loss == "focal":
+            self.loss = FocalLoss(alpha=alpha, gamma=gamma)
         else:
             raise NotImplementedError(f"{loss} loss hasn't been implemented")
 
@@ -86,3 +95,14 @@ class GradReverseLayer(nn.Module):
 
     def forward(self, x):
         return GradReverseFunc.apply(x, self.alpha)
+
+
+class FocalLoss(nn.Module):
+    def __init__(self, alpha=-1.0, gamma=2.0, reduction="mean"):
+        super().__init__()
+        self.gamma = gamma
+        self.alpha = alpha
+        self.reduction = reduction
+
+    def forward(self, x, y):
+        return sigmoid_focal_loss_jit(x, y, self.alpha, self.gamma, self.reduction)

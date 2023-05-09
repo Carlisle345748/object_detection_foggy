@@ -54,7 +54,12 @@ class TeacherStudentRCNN(nn.Module):
 
         assert len(cfg.MODEL.RESNETS.OUT_FEATURES) == 1, "feature map produced by backbone should has one layer"
         backbone_out_feature = cfg.MODEL.RESNETS.OUT_FEATURES[0]
-        discriminator = Discriminator(student_model.backbone.output_shape()[backbone_out_feature])
+        discriminator = Discriminator(
+            input_shape=student_model.backbone.output_shape()[backbone_out_feature],
+            loss="focal" if cfg.MODEL.TEACHER_STUDENT.FOCAL.ENABLE else "bce",
+            alpha=cfg.MODEL.TEACHER_STUDENT.FOCAL.ALPHA,
+            gamma=cfg.MODEL.TEACHER_STUDENT.FOCAL.GMAAM,
+        )
 
         return {
             "teacher": teacher_model,
