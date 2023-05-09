@@ -58,7 +58,7 @@ class TeacherStudentRCNN(nn.Module):
             input_shape=student_model.backbone.output_shape()[backbone_out_feature],
             loss="focal" if cfg.MODEL.TEACHER_STUDENT.FOCAL.ENABLE else "bce",
             alpha=cfg.MODEL.TEACHER_STUDENT.FOCAL.ALPHA,
-            gamma=cfg.MODEL.TEACHER_STUDENT.FOCAL.GMAAM,
+            gamma=cfg.MODEL.TEACHER_STUDENT.FOCAL.GAMMA,
         )
 
         return {
