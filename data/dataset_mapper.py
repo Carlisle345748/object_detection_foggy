@@ -25,8 +25,14 @@ class DepthDatasetMapper(DatasetMapper):
         # Load depth map
         depth = utils.read_image(dataset_dict["depth_file"]).astype(np.float32)
         utils.check_image_size(dataset_dict, depth)
-        depth = (depth - np.min(depth)) / (np.max(depth) - np.min(depth))  # Normalize depth
 
+        # Normalize depth
+        depth_max, depth_min = np.max(depth), np.min(depth)
+        depth = (depth - depth_min) / (depth_max - depth_min)
+        dataset_dict["depth_max"] = depth_max
+        dataset_dict["depth_min"] = depth_min
+
+        # Image augmentation
         aug_input = T.AugInput(image)
         transforms = self.augmentations(aug_input)
         image = aug_input.image
