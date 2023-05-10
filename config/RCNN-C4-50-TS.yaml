@@ -10,6 +10,7 @@ MODEL:
   TEACHER_STUDENT:
     BASE_ARCH: "GeneralizedRCNN"
     WEIGHTS: "output/cityscapes_baseline/model_final.pth"
+    DIS_WEIGHT: 0.5
     FOCAL:
       ENABLE: true
 INPUT:
@@ -25,8 +26,9 @@ DATASETS:
   TEST: ("cityscapes_fine_instance_seg_val", "cityscapes_foggy_val")
 SOLVER:
   BASE_LR: 0.001
+  GAMMA: 0.5
   WEIGHT_DECAY: 0.0005
-  STEPS: (40000,)
+  STEPS: (30000,)
   MAX_ITER: 75000
   IMS_PER_BATCH_SOURCE: 4
   IMS_PER_BATCH_TARGET: 4
