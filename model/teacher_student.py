@@ -147,7 +147,7 @@ class TeacherStudentRCNN(nn.Module):
         deb_losses = {}
         if self.depth_estimation is not None and "depth" in batched_inputs[0]:
             gt_depth = self.preprocess_depth(batched_inputs)
-            deb_losses, _ = self.depth_estimation(features[self.backbone_out_feature], gt_depth)
+            deb_losses, _ = self.depth_estimation(features[self.backbone_out_feature], gt_depth.tensor)
 
         if self.student.proposal_generator is not None:
             proposals, proposal_losses = self.student.proposal_generator(images, features, gt_instances)
