@@ -23,7 +23,6 @@ class DEB(nn.Module):
             nn.Sigmoid()
         )
         self.deb.apply(self.init_weights)
-        self.loss = nn.MSELoss()
 
     @classmethod
     @torch.no_grad()
@@ -43,8 +42,16 @@ class DEB(nn.Module):
         if gt_depth_map is None:
             return None, {"depth": depth_map}
 
-        depth_loss = self.loss(depth_map, gt_depth_map)
+        depth_loss = self.reverse_huber_loss(depth_map, gt_depth_map)
         return {"depth_loss": depth_loss}, {"depth": depth_map}
+
+    @staticmethod
+    def reverse_huber_loss(y_pred, y_true):
+        abs_diff = torch.abs(y_pred - y_true)
+        c = 0.2 * torch.max(abs_diff)
+        mask = abs_diff <= c
+        rh_loss = torch.where(mask, abs_diff, (y_pred - y_true) ** 2 + c ** 2) / (2 * c)
+        return torch.mean(rh_loss)
 
 
 if __name__ == '__main__':
@@ -54,4 +61,4 @@ if __name__ == '__main__':
 
     test_deb = DEB(input_shape)
     loss, d_map = test_deb(test_input, test_gt)
-    print(d_map["depth"].shape, test_gt.shape)
+    print(loss["depth_loss"], d_map["depth"].shape)
