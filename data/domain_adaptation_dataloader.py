@@ -72,11 +72,14 @@ def build_domain_adaptation_data_loader(
         target_batch_size, world_size
     )
 
+    source_batch_size = source_batch_size // world_size
+    target_batch_size = target_batch_size // world_size
+
     # source dataset
     source_dataset = ToIterableDataset(source["dataset"], source["sampler"])
     source_dataloader = build_dataloader(
         dataset=source_dataset,
-        batch_size=source_batch_size // world_size,
+        batch_size=source_batch_size,
         aspect_ratio_grouping=aspect_ratio_grouping,
         num_workers=num_workers
     )
@@ -85,7 +88,7 @@ def build_domain_adaptation_data_loader(
     target_dataset = ToIterableDataset(target["dataset"], target["sampler"])
     target_dataloader = build_dataloader(
         dataset=target_dataset,
-        batch_size=target_batch_size // world_size,
+        batch_size=target_batch_size,
         aspect_ratio_grouping=aspect_ratio_grouping,
         num_workers=num_workers
     )
