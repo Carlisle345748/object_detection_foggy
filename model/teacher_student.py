@@ -8,8 +8,9 @@ from detectron2.config import configurable
 from detectron2.modeling import GeneralizedRCNN, META_ARCH_REGISTRY, detector_postprocess
 from detectron2.modeling.proposal_generator import RPN
 from detectron2.modeling.roi_heads import Res5ROIHeads
-from detectron2.structures import Instances
+from detectron2.structures import Instances, ImageList
 
+from model.depth_estimation import DEB
 from model.discriminator import Discriminator
 
 
@@ -23,6 +24,7 @@ class TeacherStudentRCNN(nn.Module):
             teacher: GeneralizedRCNN,
             student: GeneralizedRCNN,
             discriminator: Discriminator,
+            depth_estimation: nn.Module,
             backbone_out_feature: str,
             teacher_update_step=1,
             confident_thresh=0.7,
@@ -34,6 +36,7 @@ class TeacherStudentRCNN(nn.Module):
         self.student = student
         self.teacher = teacher
         self.discriminator = discriminator
+        self.depth_estimation = depth_estimation
         self.backbone_out_feature = backbone_out_feature
         self.teacher_update_step = teacher_update_step
 
@@ -54,18 +57,23 @@ class TeacherStudentRCNN(nn.Module):
 
         assert len(cfg.MODEL.RESNETS.OUT_FEATURES) == 1, "feature map produced by backbone should has one layer"
         backbone_out_feature = cfg.MODEL.RESNETS.OUT_FEATURES[0]
+
+        feature_shape = student_model.backbone.output_shape()[backbone_out_feature]
+
         discriminator = Discriminator(
-            input_shape=student_model.backbone.output_shape()[backbone_out_feature],
+            input_shape=feature_shape,
             loss="focal" if cfg.MODEL.TEACHER_STUDENT.FOCAL.ENABLE else "bce",
             alpha=cfg.MODEL.TEACHER_STUDENT.FOCAL.ALPHA,
             gamma=cfg.MODEL.TEACHER_STUDENT.FOCAL.GAMMA,
         )
+        depth_estimation = DEB(feature_shape) if cfg.MODEL.TEACHER_STUDENT.DEB else None
 
         return {
             "teacher": teacher_model,
             "student": student_model,
             "discriminator": discriminator,
             "backbone_out_feature": backbone_out_feature,
+            "depth_estimation": depth_estimation,
             "source_losses_weight": cfg.MODEL.TEACHER_STUDENT.SOURCE_WEIGHT,
             "target_losses_weight": cfg.MODEL.TEACHER_STUDENT.TARGET_WEIGHT,
             "discriminator_losses_weight": cfg.MODEL.TEACHER_STUDENT.DIS_WEIGHT
@@ -136,6 +144,11 @@ class TeacherStudentRCNN(nn.Module):
 
         discriminator_losses = self.discriminator(features[self.backbone_out_feature], discriminator_label)
 
+        deb_losses = {}
+        if self.depth_estimation is not None and "depth" in batched_inputs[0]:
+            gt_depth = self.preprocess_depth(batched_inputs)
+            deb_losses, _ = self.depth_estimation(features[self.backbone_out_feature], gt_depth)
+
         if self.student.proposal_generator is not None:
             proposals, proposal_losses = self.student.proposal_generator(images, features, gt_instances)
         else:
@@ -149,6 +162,8 @@ class TeacherStudentRCNN(nn.Module):
         losses.update(detector_losses)
         losses.update(proposal_losses)
         losses.update(discriminator_losses)
+        losses.update(deb_losses)
+
         return losses
 
     def filter_proposals(self, proposals: List[Instances]):
@@ -196,6 +211,18 @@ class TeacherStudentRCNN(nn.Module):
                 raise Exception(f"{key} is not found in student model")
 
         self.teacher.load_state_dict(new_teacher_dict)
+
+    def preprocess_depth(self, batched_inputs: List[Dict[str, torch.Tensor]]):
+        """
+        Normalize, pad and batch the input images.
+        """
+        gt_depth = [x["depth"].to(self.student.device) for x in batched_inputs]
+        gt_depth = ImageList.from_tensors(
+            gt_depth,
+            self.student.backbone.size_divisibility,
+            padding_constraints=self.student.backbone.padding_constraints
+        )
+        return gt_depth
 
     @staticmethod
     def _postprocess(instances, batched_inputs: List[Dict[str, torch.Tensor]], image_sizes):

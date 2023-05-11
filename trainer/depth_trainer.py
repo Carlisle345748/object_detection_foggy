@@ -6,6 +6,8 @@ from detectron2.engine import DefaultTrainer
 from data.dataset_mapper import DepthDatasetMapper
 from trainer.depth_evaluator import DepthEvaluator
 
+import model.resnet_deb # Import for side effect
+
 
 class DepthTrainer(DefaultTrainer, ABC):
 

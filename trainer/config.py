@@ -1,6 +1,7 @@
 
 from detectron2.config import CfgNode as CN
 
+
 def add_teacher_student_config(cfg):
 
     _C = cfg
@@ -17,6 +18,8 @@ def add_teacher_student_config(cfg):
     _C.MODEL.TEACHER_STUDENT.DIS_WEIGHT = 0.1
     _C.MODEL.TEACHER_STUDENT.SOURCE_WEIGHT = 1
     _C.MODEL.TEACHER_STUDENT.TARGET_WEIGHT = 1
+
+    _C.MODEL.TEACHER_STUDENT.DEB = False
 
     _C.MODEL.TEACHER_STUDENT.FOCAL = CN()
     _C.MODEL.TEACHER_STUDENT.FOCAL.ENABLE = False
