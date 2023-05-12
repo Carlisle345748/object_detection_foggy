@@ -31,6 +31,7 @@ class TeacherStudentRCNN(nn.Module):
             source_losses_weight=1,
             target_losses_weight=1,
             discriminator_losses_weight=0.1,
+            depth_losses_weight=0.1,
     ):
         super().__init__()
         self.student = student
@@ -48,6 +49,7 @@ class TeacherStudentRCNN(nn.Module):
         self.source_losses_weight = source_losses_weight
         self.target_losses_weight = target_losses_weight
         self.discriminator_losses_weight = discriminator_losses_weight
+        self.depth_losses_weight = depth_losses_weight
 
     @classmethod
     def from_config(cls, cfg):
@@ -76,7 +78,8 @@ class TeacherStudentRCNN(nn.Module):
             "depth_estimation": depth_estimation,
             "source_losses_weight": cfg.MODEL.TEACHER_STUDENT.SOURCE_WEIGHT,
             "target_losses_weight": cfg.MODEL.TEACHER_STUDENT.TARGET_WEIGHT,
-            "discriminator_losses_weight": cfg.MODEL.TEACHER_STUDENT.DIS_WEIGHT
+            "discriminator_losses_weight": cfg.MODEL.TEACHER_STUDENT.DIS_WEIGHT,
+            "depth_losses_weight": cfg.MODEL.TEACHER_STUDENT.DEPTH_WEIGHT
         }
 
     def forward(self, batched_inputs):
@@ -190,16 +193,22 @@ class TeacherStudentRCNN(nn.Module):
     def weight_losses(self, source_losses: Dict[str, torch.Tensor], target_losses: Dict[str, torch.Tensor]):
         losses = {}
         for key, loss in source_losses.items():
-            weight = self.discriminator_losses_weight if key.startswith("discriminator") else self.source_losses_weight
-            losses[f"source_{key}"] = loss * weight
+            losses[f"source_{key}"] = loss * self._get_loss_weight(key, source=True)
 
         for key, loss in target_losses.items():
             if key.endswith("box_reg") or key.endswith("rpn_loc"):
                 continue
-            weight = self.discriminator_losses_weight if key.startswith("discriminator") else self.target_losses_weight
-            losses[f"target_{key}"] = loss * weight
+            losses[f"target_{key}"] = loss * self._get_loss_weight(key, source=False)
 
         return losses
+
+    def _get_loss_weight(self, loss_name, source):
+        if loss_name.startswith("discriminator"):
+            return self.discriminator_losses_weight
+        elif loss_name.startswith("depth"):
+            return self.depth_losses_weight
+        else:
+            return self.source_losses_weight if source else self.target_losses_weight
 
     def update_teacher(self, keep=0.9996):
         student_dict = self.student.state_dict()
