@@ -16,11 +16,11 @@ class DEB(nn.Module):
             # kernel_size=4, stride=4, padding=0, output_padding=0(*4)
             # kernel_size=3, stride=2, padding=1, output_padding=1(*2)
             nn.ConvTranspose2d(input_shape.channels, 128, kernel_size=5, stride=4, padding=1, output_padding=1),
-            nn.BatchNorm2d(128),
-            nn.ReLU(),
+            nn.GroupNorm(num_groups=2, num_channels=128),
+            nn.LeakyReLU(),
             nn.ConvTranspose2d(128, 64, kernel_size=4, stride=4, padding=0, output_padding=0),
             nn.BatchNorm2d(64),
-            nn.ReLU(),
+            nn.LeakyReLU(),
             nn.ConvTranspose2d(64, 1, kernel_size=3, stride=2, padding=1, output_padding=1),
             nn.Sigmoid()
         )
