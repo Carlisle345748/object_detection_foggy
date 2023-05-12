@@ -12,22 +12,16 @@ class DEB(nn.Module):
     def __init__(self, input_shape: ShapeSpec):
         super(DEB, self).__init__()
         self.deb = nn.Sequential(
-            nn.ConvTranspose2d(input_shape.channels, 256, kernel_size=3, stride=2, padding=1, output_padding=1),
-            nn.BatchNorm2d(256),
-            nn.ReLU(),
-            nn.ConvTranspose2d(256, 128, kernel_size=3, stride=2, padding=1, output_padding=1),
+            # kernel_size=5, stride=4, padding=1, output_padding=1(*4)
+            # kernel_size=4, stride=4, padding=0, output_padding=0(*4)
+            # kernel_size=3, stride=2, padding=1, output_padding=1(*2)
+            nn.ConvTranspose2d(input_shape.channels, 128, kernel_size=5, stride=4, padding=1, output_padding=1),
             nn.BatchNorm2d(128),
             nn.ReLU(),
-            nn.ConvTranspose2d(128, 64, kernel_size=3, stride=2, padding=1, output_padding=1),
+            nn.ConvTranspose2d(128, 64, kernel_size=4, stride=4, padding=0, output_padding=0),
             nn.BatchNorm2d(64),
             nn.ReLU(),
-            nn.ConvTranspose2d(64, 32, kernel_size=3, stride=2, padding=1, output_padding=1),
-            nn.BatchNorm2d(32),
-            nn.ReLU(),
-            nn.ConvTranspose2d(32, 32, kernel_size=3, stride=2, padding=1, output_padding=1),
-            nn.BatchNorm2d(32),
-            nn.ReLU(),
-            nn.ConvTranspose2d(32, 1, kernel_size=3, stride=1, padding=1),
+            nn.ConvTranspose2d(64, 1, kernel_size=3, stride=2, padding=1, output_padding=1),
             nn.Sigmoid()
         )
         self.deb.apply(self.init_weights)
