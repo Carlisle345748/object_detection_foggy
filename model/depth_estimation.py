@@ -52,7 +52,7 @@ class DEB(nn.Module):
         abs_diff = torch.abs(y_pred - y_true)
         c = 0.2 * torch.max(abs_diff)
         mask = abs_diff <= c
-        rh_loss = torch.where(mask, abs_diff, (y_pred - y_true) ** 2 + c ** 2) / (2 * c)
+        rh_loss = torch.where(mask, abs_diff, ((y_pred - y_true) ** 2 + c ** 2) / (2 * c))
         return torch.mean(rh_loss)
 
 
