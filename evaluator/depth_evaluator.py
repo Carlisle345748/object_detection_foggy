@@ -27,3 +27,20 @@ class DepthEvaluator(DatasetEvaluator):
         return {
             "Depth MSE": self.mse / self.count,
         }
+    
+    def silog_loss(self, pred_depth: torch.Tensor, gt_depth: torch.Tensor):
+        """
+        Computes the Scale-Invariant Logarithmic Error (SILog) between the predicted and ground truth depth maps.
+        """
+        gt_depth_log = torch.log(gt_depth + 1e-6)  # Adding a small constant to avoid log(0)
+        pred_depth_log = torch.log(pred_depth + 1e-6)  # Adding a small constant to avoid log(0)
+        
+        log_diff = gt_depth_log - pred_depth_log
+        N = gt_depth.numel()  # Number of pixels
+        
+        squared_error = torch.sum(log_diff ** 2) / N
+        squared_mean_error = torch.sum(log_diff) ** 2 / (N ** 2)
+        
+        silog_loss = squared_error - squared_mean_error
+
+        return silog_loss
