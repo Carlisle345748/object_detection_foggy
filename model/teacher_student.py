@@ -64,9 +64,9 @@ class TeacherStudentRCNN(nn.Module):
 
         discriminator = Discriminator(
             input_shape=feature_shape,
-            loss="focal" if cfg.MODEL.TEACHER_STUDENT.FOCAL.ENABLE else "bce",
-            alpha=cfg.MODEL.TEACHER_STUDENT.FOCAL.ALPHA,
-            gamma=cfg.MODEL.TEACHER_STUDENT.FOCAL.GAMMA,
+            loss="focal" if cfg.MODEL.TEACHER_STUDENT.DIS.FOCAL.ENABLE else "bce",
+            alpha=cfg.MODEL.TEACHER_STUDENT.DIS.FOCAL.ALPHA,
+            gamma=cfg.MODEL.TEACHER_STUDENT.DIS.FOCAL.GAMMA,
         )
         depth_estimation = DEB(feature_shape) if cfg.MODEL.TEACHER_STUDENT.DEB else None
 
@@ -78,7 +78,7 @@ class TeacherStudentRCNN(nn.Module):
             "depth_estimation": depth_estimation,
             "source_losses_weight": cfg.MODEL.TEACHER_STUDENT.SOURCE_WEIGHT,
             "target_losses_weight": cfg.MODEL.TEACHER_STUDENT.TARGET_WEIGHT,
-            "discriminator_losses_weight": cfg.MODEL.TEACHER_STUDENT.DIS_WEIGHT,
+            "discriminator_losses_weight": cfg.MODEL.TEACHER_STUDENT.DIS.LOSS_WEIGHT,
             "depth_losses_weight": cfg.MODEL.TEACHER_STUDENT.DEPTH_WEIGHT
         }
 
@@ -187,6 +187,7 @@ class TeacherStudentRCNN(nn.Module):
             gt_instances = Instances(instance.image_size)
             gt_instances.gt_boxes = instance.pred_boxes
             gt_instances.gt_classes = instance.pred_classes
+            gt_instances.pseudo = True
             data["instances"] = gt_instances
         return batch_inputs
 

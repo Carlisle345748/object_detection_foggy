@@ -10,10 +10,14 @@ MODEL:
   TEACHER_STUDENT:
     BASE_ARCH: "GeneralizedRCNN"
     WEIGHTS: "output/cityscapes_baseline/model_final.pth"
-    DIS_WEIGHT: 0.1
-    FOCAL:
-      ENABLE: false
+    DIS:
+      LOSS_WEIGHT: 0.1
+      FOCAL:
+        ENABLE: false
     DEB: true
+    ROI_FOCAL_LOSS:
+      ENABLE: true
+
 INPUT:
   MIN_SIZE_TRAIN: (800, 832, 864, 896, 928, 960, 992, 1024)
   MIN_SIZE_TRAIN_SAMPLING: "choice"
