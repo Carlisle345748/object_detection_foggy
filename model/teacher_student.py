@@ -10,6 +10,7 @@ from detectron2.modeling.proposal_generator import RPN
 from detectron2.modeling.roi_heads import Res5ROIHeads
 from detectron2.structures import Instances, ImageList
 
+import model.roi_head  # Import for side-effect
 from model.depth_estimation import DEB
 from model.discriminator import Discriminator
 

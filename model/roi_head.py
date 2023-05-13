@@ -3,7 +3,7 @@ import logging
 import torch
 from detectron2.config import configurable
 from detectron2.layers import ShapeSpec, cat, cross_entropy
-from detectron2.modeling import FastRCNNOutputLayers
+from detectron2.modeling import FastRCNNOutputLayers, ROI_HEADS_REGISTRY
 from detectron2.modeling.roi_heads import Res5ROIHeads
 from detectron2.modeling.roi_heads.fast_rcnn import _log_classification_stats
 from fvcore.nn import sigmoid_focal_loss_jit
@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 logger.parent = logging.getLogger('detectron2')
 
 
+@ROI_HEADS_REGISTRY.register()
 class TeacherStudentROIHead(Res5ROIHeads):
     @classmethod
     def from_config(cls, cfg, input_shape: ShapeSpec):
