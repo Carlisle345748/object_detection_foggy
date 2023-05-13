@@ -42,6 +42,7 @@ class TeacherStudentOutputLayers(FastRCNNOutputLayers):
         ret["use_focal"] = cfg.MODEL.TEACHER_STUDENT.ROI_FOCAL_LOSS.ENABLE
         ret['focal_loss_alpha'] = cfg.MODEL.TEACHER_STUDENT.ROI_FOCAL_LOSS.ALPHA
         ret['focal_loss_gamma'] = cfg.MODEL.TEACHER_STUDENT.ROI_FOCAL_LOSS.GAMMA
+        return ret
 
     def losses(self, predictions, proposals):
         """
@@ -112,7 +113,7 @@ class TeacherStudentOutputLayers(FastRCNNOutputLayers):
             gt_labels_target.to(pred_class_logits[0].dtype),
             alpha=self.focal_loss_alpha,
             gamma=self.focal_loss_gamma,
-            reduction="sum",
+            reduction="mean",
         )
 
 

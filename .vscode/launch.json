@@ -11,7 +11,7 @@
             "program": "train_net.py",
             "console": "integratedTerminal",
             "justMyCode": false,
-            "args": ["--depth", "--num-gpus", "1", "--config", "config/RESNET_DEB_50.yaml", "OUTPUT_DIR", "output/cityscapes_resnet_deb"]
+            "args": ["--num-gpus", "1", "--config", "config/RCNN-C4-50-TS.yaml", "OUTPUT_DIR", "output/test"]
         },
         {
             "name": "Test",
