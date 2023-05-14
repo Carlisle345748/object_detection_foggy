@@ -65,8 +65,7 @@ class TeacherStudentOutputLayers(FastRCNNOutputLayers):
             cat([p.gt_classes for p in proposals], dim=0) if len(proposals) else torch.empty(0)
         )
 
-        prefix = "target" if len(gt_classes) > 0 and hasattr(proposals[0], "pseudo") else "source"
-        _log_classification_stats(scores, gt_classes, prefix=prefix)
+        _log_classification_stats(scores, gt_classes)
 
         # parse box regression outputs
         if len(proposals):

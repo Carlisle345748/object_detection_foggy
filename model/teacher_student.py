@@ -188,7 +188,6 @@ class TeacherStudentRCNN(nn.Module):
             gt_instances = Instances(instance.image_size)
             gt_instances.gt_boxes = instance.pred_boxes
             gt_instances.gt_classes = instance.pred_classes
-            gt_instances.pseudo = [True] * len(instance.pred_classes)
             data["instances"] = gt_instances
         return batch_inputs
 
