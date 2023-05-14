@@ -105,14 +105,19 @@ class TeacherStudentOutputLayers(FastRCNNOutputLayers):
             scores for K object categories and 1 background class
             gt_classes: a long tensor of shape R that contains the gt class label of each proposal.
         """
-        valid_mask = gt_classes >= 0
+        if pred_class_logits.numel() == 0:
+            return pred_class_logits.new_zeros([1])[0]
 
-        gt_labels_target = F.one_hot(gt_classes[valid_mask], num_classes=self.num_classes + 1)[:, :-1]
-        pred_class_logits = pred_class_logits[valid_mask, :-1]
+        N = pred_class_logits.shape[0]
+        K = pred_class_logits.shape[1] - 1
+
+        target = pred_class_logits.new_zeros(N, K + 1)
+        target[range(len(gt_classes)), gt_classes] = 1
+        target = target[:, :K]
 
         return sigmoid_focal_loss_jit(
-            pred_class_logits,
-            gt_labels_target.to(pred_class_logits[0].dtype),
+            pred_class_logits[:, :-1],
+            target,
             alpha=self.focal_loss_alpha,
             gamma=self.focal_loss_gamma,
             reduction="mean",
