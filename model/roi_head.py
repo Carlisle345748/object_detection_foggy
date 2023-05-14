@@ -116,26 +116,7 @@ class TeacherStudentOutputLayers(FastRCNNOutputLayers):
             alpha_t = torch.where(pred_label == gt_classes, self.focal_loss_alpha, 1 - self.focal_loss_alpha)
             loss *= alpha_t
 
-        return loss
-
-    @classmethod
-    def _focal_loss(cls, inputs, targets, alpha, gamma, reduction="none"):
-        p = inputs
-        ce_loss = F.cross_entropy(inputs, targets, reduction="none")
-
-        p_t = p * targets + (1 - p) * (1 - targets)
-        loss = ce_loss * ((1 - p_t) ** gamma)
-
-        if alpha >= 0:
-            alpha_t = alpha * targets + (1 - alpha) * (1 - targets)
-            loss = alpha_t * loss
-
-        if reduction == "mean":
-            loss = loss.mean()
-        elif reduction == "sum":
-            loss = loss.sum()
-
-        return loss
+        return loss.sum()
 
 
 if __name__ == "__main__":
