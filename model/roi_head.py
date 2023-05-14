@@ -32,6 +32,9 @@ class TeacherStudentOutputLayers(FastRCNNOutputLayers):
     @configurable()
     def __init__(self, *, use_focal, focal_loss_alpha, focal_loss_gamma, **kwargs):
         super().__init__(**kwargs)
+        if use_focal:
+            logger.info("ROI Head use focal loss")
+
         self.focal_loss_alpha = focal_loss_alpha
         self.focal_loss_gamma = focal_loss_gamma
         self.use_focal = use_focal
@@ -82,7 +85,6 @@ class TeacherStudentOutputLayers(FastRCNNOutputLayers):
 
         if self.use_focal:
             loss_cls = self.sigmoid_focal_loss(scores, gt_classes)
-            logger.info("ROI Head use focal loss")
         elif self.use_sigmoid_ce:
             loss_cls = self.sigmoid_cross_entropy_loss(scores, gt_classes)
         else:
