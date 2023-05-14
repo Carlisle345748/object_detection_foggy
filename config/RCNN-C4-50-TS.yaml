@@ -10,7 +10,7 @@ MODEL:
     NUM_CLASSES: 8
   TEACHER_STUDENT:
     BASE_ARCH: "GeneralizedRCNN"
-    WEIGHTS: "output/cityscapes_baseline/model_final.pth"
+    WEIGHTS: "output/cityscapes_focal/model_final.pth"
     DIS:
       LOSS_WEIGHT: 0.1
       FOCAL:
@@ -32,7 +32,7 @@ DATASETS:
 SOLVER:
   BASE_LR: 0.001
   WEIGHT_DECAY: 0.0005
-  STEPS: (15000,)
+  STEPS: (30000,)
   MAX_ITER: 50000
   IMS_PER_BATCH_SOURCE: 4
   IMS_PER_BATCH_TARGET: 4
