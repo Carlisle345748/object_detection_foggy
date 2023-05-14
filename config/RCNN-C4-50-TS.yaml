@@ -15,7 +15,7 @@ MODEL:
       LOSS_WEIGHT: 0.1
       FOCAL:
         ENABLE: false
-    DEB: true
+    DEB: false
     ROI_FOCAL_LOSS:
       ENABLE: true
 INPUT:
