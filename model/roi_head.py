@@ -112,11 +112,11 @@ class TeacherStudentOutputLayers(FastRCNNOutputLayers):
         loss = (1 - p) ** self.focal_loss_gamma * ce_loss
 
         if self.focal_loss_alpha >= 0:
-            pred_label = torch.argmin(pred_class_logits[:, :-1], dim=1)
+            pred_label = torch.argmax(pred_class_logits[:, :-1], dim=1)
             alpha_t = torch.where(pred_label == gt_classes, self.focal_loss_alpha, 1 - self.focal_loss_alpha)
             loss *= alpha_t
 
-        return loss.sum()
+        return loss.mean()
 
 
 if __name__ == "__main__":
