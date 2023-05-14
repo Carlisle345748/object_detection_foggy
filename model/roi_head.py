@@ -6,7 +6,7 @@ from detectron2.layers import ShapeSpec, cat, cross_entropy
 from detectron2.modeling import FastRCNNOutputLayers, ROI_HEADS_REGISTRY
 from detectron2.modeling.roi_heads import Res5ROIHeads
 from detectron2.modeling.roi_heads.fast_rcnn import _log_classification_stats
-from torch.nn import functional as F
+from fvcore.nn import sigmoid_focal_loss
 
 logger = logging.getLogger(__name__)
 logger.parent = logging.getLogger('detectron2')
@@ -82,7 +82,7 @@ class TeacherStudentOutputLayers(FastRCNNOutputLayers):
             proposal_boxes = gt_boxes = torch.empty((0, 4), device=proposal_deltas.device)
 
         if self.use_focal:
-            loss_cls = self.focal_loss(scores, gt_classes)
+            loss_cls = self.binary_focal_loss(scores, gt_classes)
         elif self.use_sigmoid_ce:
             loss_cls = self.sigmoid_cross_entropy_loss(scores, gt_classes)
         else:
@@ -117,6 +117,25 @@ class TeacherStudentOutputLayers(FastRCNNOutputLayers):
             loss *= alpha_t
 
         return loss.mean()
+
+    def binary_focal_loss(self, pred_class_logits, gt_classes):
+        if pred_class_logits.numel() == 0:
+            return pred_class_logits.new_zeros([1])[0]
+
+        N = pred_class_logits.shape[0]
+        K = pred_class_logits.shape[1] - 1
+
+        target = pred_class_logits.new_zeros(N, K + 1)
+        target[range(len(gt_classes)), gt_classes] = 1
+        target = target[:, :K]
+
+        return sigmoid_focal_loss(
+            inputs=pred_class_logits[:, :-1],
+            targets=target,
+            alpha=self.focal_loss_alpha,
+            gamma=self.focal_loss_gamma,
+            reduction="mean"
+        )
 
 
 if __name__ == "__main__":
