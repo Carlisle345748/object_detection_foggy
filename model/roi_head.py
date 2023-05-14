@@ -6,7 +6,6 @@ from detectron2.layers import ShapeSpec, cat, cross_entropy
 from detectron2.modeling import FastRCNNOutputLayers, ROI_HEADS_REGISTRY
 from detectron2.modeling.roi_heads import Res5ROIHeads
 from detectron2.modeling.roi_heads.fast_rcnn import _log_classification_stats
-from fvcore.nn import sigmoid_focal_loss_jit
 from torch.nn import functional as F
 
 logger = logging.getLogger(__name__)
@@ -107,20 +106,17 @@ class TeacherStudentOutputLayers(FastRCNNOutputLayers):
         if pred_class_logits.numel() == 0:
             return pred_class_logits.new_zeros([1])[0]
 
-        N = pred_class_logits.shape[0]
         K = pred_class_logits.shape[1] - 1
+        ce_loss = cross_entropy(input=pred_class_logits, target=gt_classes, ignore_index=K)
+        p = torch.exp(-ce_loss)
+        loss = (1 - p) ** self.focal_loss_gamma * ce_loss
 
-        target = pred_class_logits.new_zeros(N, K + 1)
-        target[range(len(gt_classes)), gt_classes] = 1
-        target = target[:, :K]
+        if self.focal_loss_alpha >= 0:
+            pred_label = torch.argmin(pred_class_logits[:, :-1], dim=1)
+            alpha_t = torch.where(pred_label == gt_classes, self.focal_loss_alpha, 1 - self.focal_loss_alpha)
+            loss *= alpha_t
 
-        return TeacherStudentOutputLayers._focal_loss(
-            inputs=pred_class_logits[:, :-1],
-            targets=target,
-            alpha=self.focal_loss_alpha,
-            gamma=self.focal_loss_gamma,
-            reduction="mean"
-        )
+        return loss
 
     @classmethod
     def _focal_loss(cls, inputs, targets, alpha, gamma, reduction="none"):
