@@ -82,7 +82,7 @@ class TeacherStudentOutputLayers(FastRCNNOutputLayers):
             proposal_boxes = gt_boxes = torch.empty((0, 4), device=proposal_deltas.device)
 
         if self.use_focal:
-            loss_cls = self.binary_focal_loss(scores, gt_classes)
+            loss_cls = self.focal_loss(scores, gt_classes)
         elif self.use_sigmoid_ce:
             loss_cls = self.sigmoid_cross_entropy_loss(scores, gt_classes)
         else:
