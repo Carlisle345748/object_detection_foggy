@@ -106,13 +106,12 @@ class TeacherStudentOutputLayers(FastRCNNOutputLayers):
         if pred_class_logits.numel() == 0:
             return pred_class_logits.new_zeros([1])[0]
 
-        K = pred_class_logits.shape[1] - 1
-        ce_loss = cross_entropy(input=pred_class_logits, target=gt_classes, ignore_index=K, reduction="none")
+        ce_loss = cross_entropy(input=pred_class_logits, target=gt_classes, reduction="none")
         p = torch.exp(-ce_loss)
         loss = (1 - p) ** self.focal_loss_gamma * ce_loss
 
         if self.focal_loss_alpha >= 0:
-            pred_label = torch.argmax(pred_class_logits[:, :-1], dim=1)
+            pred_label = torch.argmax(pred_class_logits, dim=1)
             alpha_t = torch.where(pred_label == gt_classes, self.focal_loss_alpha, 1 - self.focal_loss_alpha)
             loss *= alpha_t
 
