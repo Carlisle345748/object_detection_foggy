@@ -10,7 +10,7 @@ MODEL:
     NUM_CLASSES: 8
   TEACHER_STUDENT:
     BASE_ARCH: "GeneralizedRCNN"
-    WEIGHTS: "output/cityscapes_focal/model_final.pth"
+    WEIGHTS: "output/cityscapes_focal_baseline/model_final.pth"
     DIS:
       LOSS_WEIGHT: 0.1
       FOCAL:
