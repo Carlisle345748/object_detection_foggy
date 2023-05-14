@@ -55,6 +55,7 @@ class Discriminator(nn.Module):
         self.block1.apply(self.init_weights)
         self.block2.apply(self.init_weights)
         self.block3.apply(self.init_weights)
+        self.classifier.apply(self.init_weights)
 
     @classmethod
     @torch.no_grad()
