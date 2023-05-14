@@ -83,7 +83,7 @@ class TeacherStudentOutputLayers(FastRCNNOutputLayers):
             proposal_boxes = gt_boxes = torch.empty((0, 4), device=proposal_deltas.device)
 
         if self.use_focal:
-            loss_cls = self.sigmoid_focal_loss(scores, gt_classes)
+            loss_cls = self.focal_loss(scores, gt_classes)
         elif self.use_sigmoid_ce:
             loss_cls = self.sigmoid_cross_entropy_loss(scores, gt_classes)
         else:
@@ -97,7 +97,7 @@ class TeacherStudentOutputLayers(FastRCNNOutputLayers):
         }
         return {k: v * self.loss_weight.get(k, 1.0) for k, v in losses.items()}
 
-    def sigmoid_focal_loss(self, pred_class_logits, gt_classes):
+    def focal_loss(self, pred_class_logits, gt_classes):
         """
         Args:
             pred_class_logits: shape (N, K+1), scores for each of the N box. Each row contains the
@@ -114,13 +114,32 @@ class TeacherStudentOutputLayers(FastRCNNOutputLayers):
         target[range(len(gt_classes)), gt_classes] = 1
         target = target[:, :K]
 
-        return sigmoid_focal_loss_jit(
-            pred_class_logits[:, :-1],
-            target,
+        return TeacherStudentOutputLayers._focal_loss(
+            inputs=pred_class_logits[:, :-1],
+            targets=target,
             alpha=self.focal_loss_alpha,
             gamma=self.focal_loss_gamma,
-            reduction="mean",
+            reduction="mean"
         )
+
+    @classmethod
+    def _focal_loss(cls, inputs, targets, alpha, gamma, reduction="none"):
+        p = inputs
+        ce_loss = F.cross_entropy(inputs, targets, reduction="none")
+
+        p_t = p * targets + (1 - p) * (1 - targets)
+        loss = ce_loss * ((1 - p_t) ** gamma)
+
+        if alpha >= 0:
+            alpha_t = alpha * targets + (1 - alpha) * (1 - targets)
+            loss = alpha_t * loss
+
+        if reduction == "mean":
+            loss = loss.mean()
+        elif reduction == "sum":
+            loss = loss.sum()
+
+        return loss
 
 
 if __name__ == "__main__":
