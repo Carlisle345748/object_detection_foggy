@@ -10,6 +10,7 @@ def add_teacher_student_config(cfg):
     _C.DATASETS.TRAIN_SOURCE = ("coco_2017_train",)
     _C.DATASETS.TRAIN_TARGET = ("coco_2017_train",)
 
+    _C.INPUT.TEACHER_STUDENT = CN()
     _C.INPUT.TEACHER_STUDENT.STRONG_AUG = False
 
     _C.MODEL.TEACHER_STUDENT = CN()
