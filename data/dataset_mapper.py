@@ -9,9 +9,8 @@ from detectron2.config import get_cfg, configurable
 from detectron2.data import DatasetMapper
 from detectron2.data import detection_utils as utils
 from detectron2.data import transforms as T
-import torchvision.transforms as torchvision_T
-import torchvision.transforms.functional as F
 
+from data.augmentation import build_strong_augmentation
 from trainer.config import add_teacher_student_config
 
 logger = logging.getLogger(__name__)
@@ -79,7 +78,7 @@ class DepthDatasetMapper(DatasetMapper):
         return dataset_dict
 
 
-class DetectionWithDepthDatasetMapper(DepthDatasetMapper):
+class TeacherStudentDepthDatasetMapper(DepthDatasetMapper):
     """
     Extend the DepthDatasetMapper to transform object detection annotations
     """
@@ -87,7 +86,7 @@ class DetectionWithDepthDatasetMapper(DepthDatasetMapper):
     @configurable
     def __init__(self, strong_augmentation: bool, **kwargs):
         super().__init__(**kwargs)
-        self.strong_augmentation = self.build_strong_augmentation() if strong_augmentation else None
+        self.strong_augmentation = build_strong_augmentation() if strong_augmentation else None
         if strong_augmentation:
             logger.info("Strong augmentations used in training: " + str(self.strong_augmentation))
 
@@ -133,18 +132,25 @@ class DetectionWithDepthDatasetMapper(DepthDatasetMapper):
 
         return dataset_dict
 
+
+class BaselineDatasetMapper(DatasetMapper):
+    @configurable
+    def __init__(self, strong_augmentation: bool, **kwargs):
+        super().__init__(**kwargs)
+        self.strong_augmentation = build_strong_augmentation() if strong_augmentation else None
+        if strong_augmentation:
+            logger.info("Strong augmentations used in training: " + str(self.strong_augmentation))
+
     @classmethod
-    def build_strong_augmentation(cls):
-        return torchvision_T.Compose(
-            [
-                torchvision_T.RandomApply([torchvision_T.ColorJitter(0.4, 0.4, 0.4, 0.1)], p=0.8),
-                torchvision_T.RandomGrayscale(p=0.2),
-                torchvision_T.RandomApply([torchvision_T.GaussianBlur(kernel_size=(5, 7), sigma=(0.1, 2.0))], p=0.5),
-                torchvision_T.RandomErasing(p=0.7, scale=(0.05, 0.2), ratio=(0.3, 3.3), value="random"),
-                torchvision_T.RandomErasing(p=0.5, scale=(0.02, 0.2), ratio=(0.1, 6), value="random"),
-                torchvision_T.RandomErasing(p=0.3, scale=(0.02, 0.2), ratio=(0.05, 8), value="random"),
-            ]
-        )
+    def from_config(cls, cfg, is_train: bool = True):
+        ret = super().from_config(cfg, is_train=is_train)
+        ret["strong_augmentation"] = cfg.INPUT.TEACHER_STUDENT.STRONG_AUG
+        return ret
+
+    def __call__(self, dataset_dict):
+        super().__call__(dataset_dict)
+        if self.strong_augmentation and self.is_train:
+            dataset_dict["image"] = self.strong_augmentation(dataset_dict["image"])
 
 
 def test_augmentation():
@@ -175,28 +181,6 @@ def test_augmentation():
     aug_img.show()
 
 
-def test_strong_augmentation():
-    """
-    Test the DatasetMapper on depth maps
-
-    Usage:
-        python -m data.mapper
-    """
-    cwd = os.getcwd().removesuffix("/data")
-
-    cfg = get_cfg()
-    add_teacher_student_config(cfg)
-    cfg.merge_from_file(os.path.join(cwd, "config", "RCNN-C4-50.yaml"))
-
-    img = Image.open(os.path.join(cwd, "datasets", "cityscapes", "leftImg8bit",
-                                  "train", "bremen", "bremen_000000_000019_leftImg8bit.png"))
-    aug = DetectionWithDepthDatasetMapper.build_strong_augmentation()
-    aug_img = aug(F.to_tensor(img))
-
-    img.show()
-    F.to_pil_image(aug_img).show()
-
-
 def test_normalize():
     cwd = os.getcwd().removesuffix("/data")
     img = Image.open(os.path.join(cwd, "datasets", "cityscapes", "disparity",
@@ -210,4 +194,4 @@ def test_normalize():
 
 
 if __name__ == "__main__":
-    test_strong_augmentation()
+    test_normalize()

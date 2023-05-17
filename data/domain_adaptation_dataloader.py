@@ -9,7 +9,7 @@ from detectron2.data.common import ToIterableDataset
 from detectron2.data.samplers import RandomSubsetTrainingSampler, RepeatFactorTrainingSampler, TrainingSampler
 from detectron2.utils.comm import get_world_size
 
-from data.dataset_mapper import DetectionWithDepthDatasetMapper
+from data.dataset_mapper import TeacherStudentDepthDatasetMapper
 from data.domain_adaptation_dataset import DAAspectRatioGroupedDataset, DAGroupedDataset
 
 
@@ -23,7 +23,7 @@ def build_domain_adaptation_train_loader(cfg):
         A dataloader that return a batch of data. Each batch contains source domain images, source
         domain object detection labels, source domain depth map, and target domain images
     """
-    mapper = DetectionWithDepthDatasetMapper(cfg)
+    mapper = TeacherStudentDepthDatasetMapper(cfg)
 
     source = train_dataset_from_config(cfg=cfg, dataset_name=cfg.DATASETS.TRAIN_SOURCE, mapper=mapper)
     target = train_dataset_from_config(cfg=cfg, dataset_name=cfg.DATASETS.TRAIN_TARGET, mapper=mapper)
