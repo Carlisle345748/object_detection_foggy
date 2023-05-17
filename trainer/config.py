@@ -10,6 +10,8 @@ def add_teacher_student_config(cfg):
     _C.DATASETS.TRAIN_SOURCE = ("coco_2017_train",)
     _C.DATASETS.TRAIN_TARGET = ("coco_2017_train",)
 
+    _C.INPUT.TEACHER_STUDENT.STRONG_AUG = False
+
     _C.MODEL.TEACHER_STUDENT = CN()
     _C.MODEL.TEACHER_STUDENT.BASE_ARCH = "GeneralizedRCNN"
     _C.MODEL.TEACHER_STUDENT.WEIGHTS = "detectron2://ImageNetPretrained/MSRA/R-50.pkl"

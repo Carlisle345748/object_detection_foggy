@@ -5,6 +5,7 @@ from typing import List, Dict, Optional
 import torch
 import torch.nn as nn
 from detectron2.config import configurable
+from detectron2.layers import move_device_like
 from detectron2.modeling import GeneralizedRCNN, META_ARCH_REGISTRY, detector_postprocess
 from detectron2.modeling.proposal_generator import RPN
 from detectron2.modeling.roi_heads import Res5ROIHeads
@@ -33,6 +34,7 @@ class TeacherStudentRCNN(nn.Module):
             target_losses_weight=1,
             discriminator_losses_weight=0.1,
             depth_losses_weight=0.1,
+            strong_augmentation=False,
     ):
         super().__init__()
         self.student = student
@@ -51,6 +53,7 @@ class TeacherStudentRCNN(nn.Module):
         self.target_losses_weight = target_losses_weight
         self.discriminator_losses_weight = discriminator_losses_weight
         self.depth_losses_weight = depth_losses_weight
+        self.strong_augmentation = strong_augmentation
 
     @classmethod
     def from_config(cls, cfg):
@@ -80,7 +83,8 @@ class TeacherStudentRCNN(nn.Module):
             "source_losses_weight": cfg.MODEL.TEACHER_STUDENT.SOURCE_WEIGHT,
             "target_losses_weight": cfg.MODEL.TEACHER_STUDENT.TARGET_WEIGHT,
             "discriminator_losses_weight": cfg.MODEL.TEACHER_STUDENT.DIS.LOSS_WEIGHT,
-            "depth_losses_weight": cfg.MODEL.TEACHER_STUDENT.DEPTH_WEIGHT
+            "depth_losses_weight": cfg.MODEL.TEACHER_STUDENT.DEPTH_WEIGHT,
+            "strong_augmentation": cfg.INPUT.TEACHER_STUDENT.STRONG_AUG
         }
 
     def forward(self, batched_inputs):
@@ -138,7 +142,8 @@ class TeacherStudentRCNN(nn.Module):
     def student_forward(self, batched_inputs, discriminator_label):
         assert self.student.training
 
-        images = self.student.preprocess_image(batched_inputs)
+        image_key = "image_strong_aug" if self.strong_augmentation else "image"
+        images = self.preprocess_image(batched_inputs, image_key=image_key)
         if "instances" in batched_inputs[0]:
             gt_instances = [x["instances"].to(self.student.device) for x in batched_inputs]
         else:
@@ -272,3 +277,16 @@ class TeacherStudentRCNN(nn.Module):
         model.roi_heads.res5 = torch.compile(model.roi_heads.res5)
         model.roi_heads.box_predictor = torch.compile(model.roi_heads.box_predictor)
         return model
+
+    def preprocess_image(self, batched_inputs: List[Dict[str, torch.Tensor]], image_key: str = "image"):
+        """
+        Normalize, pad and batch the input images.
+        """
+        images = [move_device_like(x[image_key], self.student.pixel_mean) for x in batched_inputs]
+        images = [(x - self.student.pixel_mean) / self.student.pixel_std for x in images]
+        images = ImageList.from_tensors(
+            images,
+            self.student.backbone.size_divisibility,
+            padding_constraints=self.student.backbone.padding_constraints,
+        )
+        return images

@@ -5,7 +5,7 @@ import os
 import numpy as np
 import torch
 from PIL import Image
-from detectron2.config import get_cfg
+from detectron2.config import get_cfg, configurable
 from detectron2.data import DatasetMapper
 from detectron2.data import detection_utils as utils
 from detectron2.data import transforms as T
@@ -28,7 +28,15 @@ class DepthDatasetMapper(DatasetMapper):
         image = utils.read_image(dataset_dict["file_name"], format=self.image_format)
         utils.check_image_size(dataset_dict, image)
 
+        # Image augmentation
+        aug_input = T.AugInput(image)
+        transforms = self.augmentations(aug_input)
+        image = aug_input.image
+
         # Load depth map
+        if "depth_file" not in dataset_dict:
+            return image, None, transforms
+
         depth = utils.read_image(dataset_dict["depth_file"]).astype(np.float32)
         utils.check_image_size(dataset_dict, depth)
 
@@ -37,11 +45,6 @@ class DepthDatasetMapper(DatasetMapper):
         depth = (depth - depth_min) / (depth_max - depth_min)
         dataset_dict["depth_max"] = depth_max
         dataset_dict["depth_min"] = depth_min
-
-        # Image augmentation
-        aug_input = T.AugInput(image)
-        transforms = self.augmentations(aug_input)
-        image = aug_input.image
 
         # Apply augmentation to depth map
         depth = transforms.apply_image(depth)
@@ -60,7 +63,8 @@ class DepthDatasetMapper(DatasetMapper):
         image, depth, _ = self._transform_image_and_depth(dataset_dict)
 
         # Add depth map into data
-        dataset_dict["depth"] = torch.as_tensor(np.ascontiguousarray(depth))
+        if depth is not None:
+            dataset_dict["depth"] = torch.as_tensor(np.ascontiguousarray(depth))
 
         # Pytorch's dataloader is efficient on torch.Tensor due to shared-memory,
         # but not efficient on large generic data structures due to the use of pickle & mp.Queue.
@@ -79,11 +83,19 @@ class DetectionWithDepthDatasetMapper(DepthDatasetMapper):
     """
     Extend the DepthDatasetMapper to transform object detection annotations
     """
+
+    @configurable
     def __init__(self, strong_augmentation: bool, **kwargs):
         super().__init__(**kwargs)
         if strong_augmentation:
             self.strong_augmentation = self.build_strong_augmentation()
             logger.info("Strong augmentations used in training: " + str(self.strong_augmentation))
+
+    @classmethod
+    def from_config(cls, cfg, is_train: bool = True, strong_augmentation: bool = False):
+        ret = super().from_config(cfg, is_train=is_train)
+        ret["strong_augmentation"] = strong_augmentation
+        return ret
 
     def __call__(self, dataset_dict):
         """
@@ -97,7 +109,8 @@ class DetectionWithDepthDatasetMapper(DepthDatasetMapper):
         image, depth, transforms = self._transform_image_and_depth(dataset_dict)
 
         # Add depth map into datadict
-        dataset_dict["depth"] = torch.as_tensor(np.ascontiguousarray(depth))
+        if depth is not None:
+            dataset_dict["depth"] = torch.as_tensor(np.ascontiguousarray(depth))
 
         image_shape = image.shape[:2]  # h, w
         # Pytorch's dataloader is efficient on torch.Tensor due to shared-memory,
