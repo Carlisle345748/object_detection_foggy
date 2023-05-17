@@ -23,8 +23,7 @@ INPUT:
   MIN_SIZE_TEST: 1024
   MAX_SIZE_TRAIN: 2048
   MAX_SIZE_TEST: 2048
-  TEACHER_STUDENT:
-    STRONG_AUG: true
+  STRONG_AUG: true
 DATASETS:
   TRAIN: ("cityscapes_depth_train",)
   TRAIN_SOURCE: ("cityscapes_train",)

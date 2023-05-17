@@ -93,7 +93,7 @@ class TeacherStudentDepthDatasetMapper(DepthDatasetMapper):
     @classmethod
     def from_config(cls, cfg, is_train: bool = True):
         ret = super().from_config(cfg, is_train=is_train)
-        ret["strong_augmentation"] = cfg.INPUT.TEACHER_STUDENT.STRONG_AUG
+        ret["strong_augmentation"] = cfg.INPUT.STRONG_AUG
         return ret
 
     def __call__(self, dataset_dict):
@@ -144,7 +144,7 @@ class BaselineDatasetMapper(DatasetMapper):
     @classmethod
     def from_config(cls, cfg, is_train: bool = True):
         ret = super().from_config(cfg, is_train=is_train)
-        ret["strong_augmentation"] = cfg.INPUT.TEACHER_STUDENT.STRONG_AUG
+        ret["strong_augmentation"] = cfg.INPUT.STRONG_AUG
         return ret
 
     def __call__(self, dataset_dict):
