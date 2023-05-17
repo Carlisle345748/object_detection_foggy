@@ -23,7 +23,7 @@ def build_domain_adaptation_train_loader(cfg):
         A dataloader that return a batch of data. Each batch contains source domain images, source
         domain object detection labels, source domain depth map, and target domain images
     """
-    mapper = DetectionWithDepthDatasetMapper(cfg, strong_augmentation=cfg.INPUT.TEACHER_STUDENT.STRONG_AUG)
+    mapper = DetectionWithDepthDatasetMapper(cfg)
 
     source = train_dataset_from_config(cfg=cfg, dataset_name=cfg.DATASETS.TRAIN_SOURCE, mapper=mapper)
     target = train_dataset_from_config(cfg=cfg, dataset_name=cfg.DATASETS.TRAIN_TARGET, mapper=mapper)

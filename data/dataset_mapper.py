@@ -87,14 +87,14 @@ class DetectionWithDepthDatasetMapper(DepthDatasetMapper):
     @configurable
     def __init__(self, strong_augmentation: bool, **kwargs):
         super().__init__(**kwargs)
+        self.strong_augmentation = self.build_strong_augmentation() if strong_augmentation else None
         if strong_augmentation:
-            self.strong_augmentation = self.build_strong_augmentation()
             logger.info("Strong augmentations used in training: " + str(self.strong_augmentation))
 
     @classmethod
-    def from_config(cls, cfg, is_train: bool = True, strong_augmentation: bool = False):
+    def from_config(cls, cfg, is_train: bool = True):
         ret = super().from_config(cfg, is_train=is_train)
-        ret["strong_augmentation"] = strong_augmentation
+        ret["strong_augmentation"] = cfg.INPUT.TEACHER_STUDENT.STRONG_AUG
         return ret
 
     def __call__(self, dataset_dict):
@@ -119,7 +119,7 @@ class DetectionWithDepthDatasetMapper(DepthDatasetMapper):
         dataset_dict["image"] = torch.as_tensor(np.ascontiguousarray(image.transpose(2, 0, 1)))
 
         # Use strong augmentation
-        if hasattr(self, "strong_augmentation") and self.is_train:
+        if self.strong_augmentation and self.is_train:
             dataset_dict["image_strong_aug"] = self.strong_augmentation(dataset_dict["image"])
 
         if not self.is_train:
