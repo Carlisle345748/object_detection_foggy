@@ -9,7 +9,7 @@ MODEL:
     NUM_CLASSES: 8
   TEACHER_STUDENT:
     BASE_ARCH: "GeneralizedRCNN"
-    WEIGHTS: "output/cityscapes_focal_baseline/model_final.pth"
+    WEIGHTS: "output/cityscapes_baseline/model_final.pth"
     DIS:
       LOSS_WEIGHT: 0.1
       FOCAL:
@@ -18,7 +18,7 @@ MODEL:
     ROI_FOCAL_LOSS:
       ENABLE: true
 INPUT:
-  MIN_SIZE_TRAIN: (800, 832, 864, 896, 928, 960, 992, 1024)
+  MIN_SIZE_TRAIN: (600,)
   MIN_SIZE_TRAIN_SAMPLING: "choice"
   MIN_SIZE_TEST: 1024
   MAX_SIZE_TRAIN: 2048
@@ -31,7 +31,7 @@ DATASETS:
 SOLVER:
   BASE_LR: 0.001
   WEIGHT_DECAY: 0.0005
-  STEPS: (30000,)
+  STEPS: (40000,)
   MAX_ITER: 50000
   IMS_PER_BATCH_SOURCE: 4
   IMS_PER_BATCH_TARGET: 4

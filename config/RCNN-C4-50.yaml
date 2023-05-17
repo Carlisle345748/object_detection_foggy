@@ -5,7 +5,6 @@ MODEL:
   RESNETS:
     DEPTH: 50
   ROI_HEADS:
-    BATCH_SIZE_PER_IMAGE: 256
     NUM_CLASSES: 8
 INPUT:
   MIN_SIZE_TRAIN: (800, 832, 864, 896, 928, 960, 992, 1024)
@@ -17,10 +16,10 @@ DATASETS:
   TRAIN: ("cityscapes_fine_instance_seg_train",)
   TEST: ("cityscapes_fine_instance_seg_val", "cityscapes_foggy_val")
 SOLVER:
-  BASE_LR: 0.001
+  BASE_LR: 0.01
   WEIGHT_DECAY: 0.0005
-  STEPS: (50000,)
-  MAX_ITER: 70000
+  STEPS: (18000,70000)
+  MAX_ITER: 80000
   IMS_PER_BATCH: 2
 TEST:
-  EVAL_PERIOD: 5000
+  EVAL_PERIOD: 2500
