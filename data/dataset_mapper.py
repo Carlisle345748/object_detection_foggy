@@ -9,7 +9,7 @@ from detectron2.config import get_cfg, configurable
 from detectron2.data import DatasetMapper
 from detectron2.data import detection_utils as utils
 from detectron2.data import transforms as T
-import torchvision.transforms as transforms
+import torchvision.transforms as torchvision_T
 import torchvision.transforms.functional as F
 
 from trainer.config import add_teacher_student_config
@@ -135,14 +135,14 @@ class DetectionWithDepthDatasetMapper(DepthDatasetMapper):
 
     @classmethod
     def build_strong_augmentation(cls):
-        return transforms.Compose(
+        return torchvision_T.Compose(
             [
-                transforms.RandomApply([transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)], p=0.8),
-                transforms.RandomGrayscale(p=0.2),
-                transforms.RandomApply([transforms.GaussianBlur(kernel_size=(5, 7), sigma=(0.1, 2.0))], p=0.5),
-                transforms.RandomErasing(p=0.7, scale=(0.05, 0.2), ratio=(0.3, 3.3), value="random"),
-                transforms.RandomErasing(p=0.5, scale=(0.02, 0.2), ratio=(0.1, 6), value="random"),
-                transforms.RandomErasing(p=0.3, scale=(0.02, 0.2), ratio=(0.05, 8), value="random"),
+                torchvision_T.RandomApply([torchvision_T.ColorJitter(0.4, 0.4, 0.4, 0.1)], p=0.8),
+                torchvision_T.RandomGrayscale(p=0.2),
+                torchvision_T.RandomApply([torchvision_T.GaussianBlur(kernel_size=(5, 7), sigma=(0.1, 2.0))], p=0.5),
+                torchvision_T.RandomErasing(p=0.7, scale=(0.05, 0.2), ratio=(0.3, 3.3), value="random"),
+                torchvision_T.RandomErasing(p=0.5, scale=(0.02, 0.2), ratio=(0.1, 6), value="random"),
+                torchvision_T.RandomErasing(p=0.3, scale=(0.02, 0.2), ratio=(0.05, 8), value="random"),
             ]
         )
 
