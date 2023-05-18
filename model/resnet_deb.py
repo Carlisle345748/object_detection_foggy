@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import numpy as np
+from PIL import Image
 from detectron2.config import configurable
 from detectron2.data.detection_utils import convert_image_to_rgb
 from detectron2.modeling import META_ARCH_REGISTRY, ResNet, build_backbone
@@ -88,9 +89,11 @@ class ResnetDEB(nn.Module):
     def visualize_training(cls, batched_inputs, depth_maps):
         storage = get_event_storage()
         for data, pred in zip(batched_inputs, depth_maps):
-            gt_depth_map = convert_image_to_rgb(data["depth"].repeat(3, 1, 1), format="F")
-            depth_map = convert_image_to_rgb(pred["depth"].repeat(3, 1, 1), format="F")
+            gt_depth_map = convert_image_to_rgb(data["depth"], "L")
+            depth_map = convert_image_to_rgb(pred["depth"])
             img = np.cat((gt_depth_map, depth_map), dim=1)
+            img = img.transpose(2, 0, 1)
             img_name = "Left: GT depth map;  Right: Predicted depth map"
             storage.put(img_name, img)
             break  # only visualize one image
+
