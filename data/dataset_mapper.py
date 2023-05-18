@@ -9,6 +9,8 @@ from detectron2.config import get_cfg, configurable
 from detectron2.data import DatasetMapper
 from detectron2.data import detection_utils as utils
 from detectron2.data import transforms as T
+from detectron2.data.detection_utils import _apply_exif_orientation, convert_PIL_to_numpy
+from detectron2.utils.file_io import PathManager
 
 from data.augmentation import build_strong_augmentation
 from trainer.config import add_teacher_student_config
@@ -36,14 +38,14 @@ class DepthDatasetMapper(DatasetMapper):
         if "depth_file" not in dataset_dict:
             return image, None, transforms
 
-        depth = utils.read_image(dataset_dict["depth_file"]).astype(np.float32)
+        depth = self.read_depth_map(dataset_dict["depth_file"])
         utils.check_image_size(dataset_dict, depth)
 
         # Normalize depth
-        depth_max, depth_min = np.max(depth), np.min(depth)
-        depth = (depth - depth_min) / (depth_max - depth_min)
-        dataset_dict["depth_max"] = depth_max
-        dataset_dict["depth_min"] = depth_min
+        depth_mean, depth_std = np.mean(depth), np.std(depth)
+        depth = (depth - depth_mean) / depth_std
+        dataset_dict["depth_mean"] = depth_mean
+        dataset_dict["depth_std"] = depth_std
 
         # Apply augmentation to depth map
         depth = transforms.apply_image(depth)
@@ -75,6 +77,16 @@ class DepthDatasetMapper(DatasetMapper):
             return dataset_dict
 
         return dataset_dict
+
+    @classmethod
+    def read_depth_map(cls, file_name):
+        with PathManager.open(file_name, "rb") as f:
+            image = Image.open(f)
+            image = image.convert("L")
+
+            # work around this bug: https://github.com/python-pillow/Pillow/issues/3973
+            image = _apply_exif_orientation(image)
+            return convert_PIL_to_numpy(image, "L")
 
 
 class TeacherStudentDepthDatasetMapper(DepthDatasetMapper):
@@ -185,11 +197,10 @@ def test_normalize():
     img = Image.open(os.path.join(cwd, "datasets", "cityscapes", "disparity",
                                   "train", "bremen", "bremen_000084_000019_disparity.png"))
     img.show()
-    image = np.asarray(img).astype(np.float32)
-    image = torch.nn.functional.interpolate(torch.from_numpy(image).resize(1, 1, 1024, 2048), (60, 120))
-    image = torch.nn.functional.interpolate(image, (1024, 2048))
-    aug_img = Image.fromarray(image.resize(1024, 2048).numpy())
-    aug_img.show()
+    image = img.convert("L")
+    image = np.asarray(image)
+    grayscale = Image.fromarray(image)
+    grayscale.show()
 
 
 if __name__ == "__main__":
