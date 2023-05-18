@@ -13,12 +13,12 @@ class DEB(nn.Module):
         super(DEB, self).__init__()
         self.deb = nn.Sequential(
             # kernel_size=5, stride=4, padding=1, output_padding=1(*4)
-            # kernel_size=4, stride=4, padding=0, output_padding=0(*4)
+            # kernel_size=3, stride=2, padding=1, output_padding=1(*2)
             # kernel_size=3, stride=2, padding=1, output_padding=1(*2)
             nn.ConvTranspose2d(input_shape.channels, 128, kernel_size=5, stride=4, padding=1, output_padding=1),
             nn.GroupNorm(num_groups=2, num_channels=128),
             nn.LeakyReLU(),
-            nn.ConvTranspose2d(128, 64, kernel_size=4, stride=4, padding=0, output_padding=0),
+            nn.ConvTranspose2d(128, 64, kernel_size=3, stride=2, padding=1, output_padding=1),
             nn.BatchNorm2d(64),
             nn.LeakyReLU(),
             nn.ConvTranspose2d(64, 1, kernel_size=3, stride=2, padding=1, output_padding=1),
@@ -34,17 +34,15 @@ class DEB(nn.Module):
     def forward(self, x, gt_depth_map=None):
         depth_map = self.deb(x)
         if gt_depth_map is None:
-            return None, {"depth": depth_map}
+            return None, [{"depth": d} for d in depth_map]
 
-        gt_depth_map = torch.unsqueeze(gt_depth_map, 1)
         _, _, h1, w1 = depth_map.size()
         _, _, h, w = gt_depth_map.size() 
         if h1 != h or w1 != w:
             gt_depth_map = torch.nn.Upsample(size=(h1, w1), mode='bilinear')(gt_depth_map)
 
         depth_loss = self.reverse_huber_loss(depth_map, gt_depth_map)
-        depth_map = [d for d in depth_map]
-        return {"depth_loss": depth_loss}, {"depth": depth_map}
+        return {"depth_loss": depth_loss}, [{"depth": d} for d in depth_map]
 
     @staticmethod
     def reverse_huber_loss(y_pred, y_true):

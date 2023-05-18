@@ -24,13 +24,13 @@ class DepthEvaluator(DatasetEvaluator):
     def process(self, inputs, outputs):
         for data, pred in zip(inputs, outputs):
             gt_depth_map = data["depth"]
-            pred_depth_map = pred["depth"]
-            self.mse += F.mse_loss(pred_depth_map, gt_depth_map).to("cup").item()
-            self.mae += torch.mean(torch.abs(pred_depth_map - gt_depth_map)).to("cup").item()
-            self.silog += self.silog_loss(pred_depth_map, gt_depth_map).to("cup").item()
-            self.delta1 += self.delta_threshold(gt_depth_map, pred_depth_map, 1.25).to("cup").item()
-            self.delta2 += self.delta_threshold(gt_depth_map, pred_depth_map, 1.25 ** 2).to("cup").item()
-            self.delta3 += self.delta_threshold(gt_depth_map, pred_depth_map, 1.25 ** 3).to("cup").item()
+            pred_depth_map = pred["depth"].to(gt_depth_map.device)
+            self.mse += F.mse_loss(pred_depth_map, gt_depth_map).item()
+            self.mae += torch.mean(torch.abs(pred_depth_map - gt_depth_map)).item()
+            self.silog += self.silog_loss(pred_depth_map, gt_depth_map).item()
+            self.delta1 += self.delta_threshold(gt_depth_map, pred_depth_map, 1.25).item()
+            self.delta2 += self.delta_threshold(gt_depth_map, pred_depth_map, 1.25 ** 2).item()
+            self.delta3 += self.delta_threshold(gt_depth_map, pred_depth_map, 1.25 ** 3).item()
             
             self.count += 1
 

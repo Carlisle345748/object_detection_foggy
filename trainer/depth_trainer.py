@@ -1,6 +1,6 @@
 from abc import ABC
 
-from detectron2.data import build_detection_train_loader
+from detectron2.data import build_detection_train_loader, build_detection_test_loader
 from detectron2.engine import DefaultTrainer
 
 from data.dataset_mapper import DepthDatasetMapper
@@ -19,3 +19,8 @@ class DepthTrainer(DefaultTrainer, ABC):
     def build_train_loader(cls, cfg):
         mapper = DepthDatasetMapper(cfg)
         return build_detection_train_loader(cfg, mapper=mapper)
+
+    @classmethod
+    def build_test_loader(cls, cfg, dataset_name):
+        mapper = DepthDatasetMapper(cfg)
+        return build_detection_test_loader(cfg, dataset_name=dataset_name, mapper=mapper)

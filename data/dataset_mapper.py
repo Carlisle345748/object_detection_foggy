@@ -63,8 +63,7 @@ class DepthDatasetMapper(DatasetMapper):
 
         # Add depth map into data
         if depth is not None:
-            dataset_dict["depth"] = torch.as_tensor(np.ascontiguousarray(depth))
-
+            dataset_dict["depth"] = torch.unsqueeze(torch.as_tensor(np.ascontiguousarray(depth)), 0)
         # Pytorch's dataloader is efficient on torch.Tensor due to shared-memory,
         # but not efficient on large generic data structures due to the use of pickle & mp.Queue.
         # Therefore it's important to use torch.Tensor.
