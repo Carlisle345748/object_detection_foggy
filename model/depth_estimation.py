@@ -22,7 +22,6 @@ class DEB(nn.Module):
             nn.BatchNorm2d(64),
             nn.LeakyReLU(),
             nn.ConvTranspose2d(64, 1, kernel_size=3, stride=2, padding=1, output_padding=1),
-            nn.Sigmoid()
         )
         self.deb.apply(self.init_weights)
 
