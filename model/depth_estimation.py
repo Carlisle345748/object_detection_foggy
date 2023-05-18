@@ -43,6 +43,7 @@ class DEB(nn.Module):
             gt_depth_map = torch.nn.Upsample(size=(h1, w1), mode='bilinear')(gt_depth_map)
 
         depth_loss = self.reverse_huber_loss(depth_map, gt_depth_map)
+        depth_map = [d for d in depth_map]
         return {"depth_loss": depth_loss}, {"depth": depth_map}
 
     @staticmethod

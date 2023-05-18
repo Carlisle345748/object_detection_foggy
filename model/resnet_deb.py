@@ -13,12 +13,12 @@ from model.depth_estimation import DEB
 class ResnetDEB(nn.Module):
     @configurable
     def __init__(
-        self, 
-        backbone: ResNet, 
-        backbone_out_feature: str, 
-        depth_estimation: nn.Module,
-        pixel_mean: Tuple[float],
-        pixel_std: Tuple[float],
+            self,
+            backbone: ResNet,
+            backbone_out_feature: str,
+            depth_estimation: nn.Module,
+            pixel_mean: Tuple[float],
+            pixel_std: Tuple[float],
     ):
         super().__init__()
         self.backbone = backbone
@@ -28,7 +28,7 @@ class ResnetDEB(nn.Module):
         self.register_buffer("pixel_mean", torch.tensor(pixel_mean).view(-1, 1, 1), False)
         self.register_buffer("pixel_std", torch.tensor(pixel_std).view(-1, 1, 1), False)
         assert (
-            self.pixel_mean.shape == self.pixel_std.shape
+                self.pixel_mean.shape == self.pixel_std.shape
         ), f"{self.pixel_mean} and {self.pixel_std} have different shapes!"
 
     @classmethod
@@ -59,8 +59,7 @@ class ResnetDEB(nn.Module):
         losses, _ = self.depth_estimation(features[self.backbone_out_feature], gt_depth.tensor)
         return losses
 
-    def inference(self, batched_inputs: List[Dict[str, torch.Tensor]],
-    ):
+    def inference(self, batched_inputs: List[Dict[str, torch.Tensor]]):
         images = self.preprocess_inputs(batched_inputs, "image")
         features = self.backbone(images.tensor)
         _, depth_map = self.depth_estimation(features[self.backbone_out_feature])
