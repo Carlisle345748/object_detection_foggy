@@ -59,7 +59,7 @@ class ResnetDEB(nn.Module):
             return self.inference(batched_inputs)
         images = self.preprocess_inputs(batched_inputs, "image")
         features = self.backbone(images.tensor)
-        gt_depth = self.preprocess_inputs(batched_inputs, "depth")
+        gt_depth = self.preprocess_inputs(batched_inputs, "depth", normalize=False)
         losses, depth_map = self.depth_estimation(features[self.backbone_out_feature], gt_depth.tensor)
         storage = get_event_storage()
         if storage.iter % 100 == 0:
@@ -72,12 +72,14 @@ class ResnetDEB(nn.Module):
         _, depth_map = self.depth_estimation(features[self.backbone_out_feature])
         return depth_map
 
-    def preprocess_inputs(self, batched_inputs: List[Dict[str, torch.Tensor]], attr_name: str):
+    def preprocess_inputs(self, batched_inputs: List[Dict[str, torch.Tensor]], attr_name: str, normalize: bool = True):
         """
         Normalize, pad and batch the input images.
         attr_name: "image" for preprocess images, "depth" for preprocessing depth maps.
         """
-        images = [x[attr_name].to(self.device, dtype=torch.float32) for x in batched_inputs]
+        images = [x[attr_name].to(self.device) for x in batched_inputs]
+        if normalize:
+            images = [(x - self.pixel_mean) / self.pixel_std for x in images]
         images = ImageList.from_tensors(
             images,
             self.backbone.size_divisibility,
