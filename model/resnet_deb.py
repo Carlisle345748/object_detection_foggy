@@ -1,10 +1,13 @@
 import torch
 import torch.nn as nn
+import numpy as np
 from detectron2.config import configurable
+from detectron2.data.detection_utils import convert_image_to_rgb
 from detectron2.modeling import META_ARCH_REGISTRY, ResNet, build_backbone
 from typing import List, Dict, Tuple
 
 from detectron2.structures import ImageList
+from detectron2.utils.events import get_event_storage
 
 from model.depth_estimation import DEB
 
@@ -56,7 +59,10 @@ class ResnetDEB(nn.Module):
         images = self.preprocess_inputs(batched_inputs, "image")
         features = self.backbone(images.tensor)
         gt_depth = self.preprocess_inputs(batched_inputs, "depth")
-        losses, _ = self.depth_estimation(features[self.backbone_out_feature], gt_depth.tensor)
+        losses, depth_map = self.depth_estimation(features[self.backbone_out_feature], gt_depth.tensor)
+        storage = get_event_storage()
+        if storage.iter % 100 == 0:
+            self.visualize_training(batched_inputs, depth_map)
         return losses
 
     def inference(self, batched_inputs: List[Dict[str, torch.Tensor]]):
@@ -77,3 +83,14 @@ class ResnetDEB(nn.Module):
             padding_constraints=self.backbone.padding_constraints,
         )
         return images
+
+    @classmethod
+    def visualize_training(cls, batched_inputs, depth_maps):
+        storage = get_event_storage()
+        for data, pred in zip(batched_inputs, depth_maps):
+            gt_depth_map = convert_image_to_rgb(data["depth"].repeat(3, 1, 1), format="F")
+            depth_map = convert_image_to_rgb(pred["depth"].repeat(3, 1, 1), format="F")
+            img = np.cat((gt_depth_map, depth_map), dim=1)
+            img_name = "Left: GT depth map;  Right: Predicted depth map"
+            storage.put(img_name, img)
+            break  # only visualize one image
