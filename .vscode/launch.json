@@ -11,7 +11,7 @@
             "program": "train_net.py",
             "console": "integratedTerminal",
             "justMyCode": false,
-            "args": ["--num-gpus", "1", "--config", "config/RCNN-C4-50-Focal.yaml", "OUTPUT_DIR", "output/test"]
+            "args": ["--num-gpus", "1", "--config", "config/RCNN-C4-50-TS.yaml", "OUTPUT_DIR", "output/test"]
         },
         {
             "name": "Test",
