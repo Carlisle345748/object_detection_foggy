@@ -59,10 +59,10 @@ class ResnetDEB(nn.Module):
             return self.inference(batched_inputs)
         images = self.preprocess_inputs(batched_inputs, "image")
         features = self.backbone(images.tensor)
-        gt_depth = self.preprocess_inputs(batched_inputs, "depth", normalize=False)
+        gt_depth = self.preprocess_inputs(batched_inputs, "depth")
         losses, depth_map = self.depth_estimation(features[self.backbone_out_feature], gt_depth.tensor)
         storage = get_event_storage()
-        if storage.iter % 100 == 0:
+        if storage.iter > 0 and storage.iter % 100 == 0:
             self.visualize_training(batched_inputs, depth_map)
         return losses
 
@@ -72,13 +72,13 @@ class ResnetDEB(nn.Module):
         _, depth_map = self.depth_estimation(features[self.backbone_out_feature])
         return depth_map
 
-    def preprocess_inputs(self, batched_inputs: List[Dict[str, torch.Tensor]], attr_name: str, normalize: bool = True):
+    def preprocess_inputs(self, batched_inputs: List[Dict[str, torch.Tensor]], attr_name: str):
         """
         Normalize, pad and batch the input images.
         attr_name: "image" for preprocess images, "depth" for preprocessing depth maps.
         """
         images = [x[attr_name].to(self.device) for x in batched_inputs]
-        if normalize:
+        if attr_name == "image":
             images = [(x - self.pixel_mean) / self.pixel_std for x in images]
         images = ImageList.from_tensors(
             images,
@@ -88,14 +88,16 @@ class ResnetDEB(nn.Module):
         return images
 
     @classmethod
+    @torch.no_grad()
     def visualize_training(cls, batched_inputs, depth_maps):
         storage = get_event_storage()
         for data, pred in zip(batched_inputs, depth_maps):
-            gt_depth_map = convert_image_to_rgb(data["depth"], "L")
-            depth_map = convert_image_to_rgb(pred["depth"])
-            img = np.cat((gt_depth_map, depth_map), dim=1)
+            gt_depth_map = data["depth"] * data["depth_std"] + data["depth_mean"]
+            depth_map = pred["depth"].detach() * data["depth_std"] + data["depth_mean"]
+            gt_depth_map = convert_image_to_rgb(gt_depth_map.permute(1, 2, 0), "L")
+            depth_map = convert_image_to_rgb(depth_map.permute(1, 2, 0), "L")
+            img = np.concatenate((gt_depth_map, depth_map), axis=1)
             img = img.transpose(2, 0, 1)
             img_name = "Left: GT depth map;  Right: Predicted depth map"
-            storage.put(img_name, img)
+            storage.put_image(img_name, img)
             break  # only visualize one image
-
