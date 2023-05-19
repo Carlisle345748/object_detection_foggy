@@ -92,15 +92,23 @@ class ResnetDEB(nn.Module):
     def visualize_training(cls, batched_inputs, depth_maps):
         storage = get_event_storage()
         for data, pred in zip(batched_inputs, depth_maps):
-            gt_depth_map = data["depth"] * data["depth_std"] + data["depth_mean"]
-            depth_map = pred["depth"].detach() * data["depth_std"] + data["depth_mean"]
+            # Recreate disparity depth map
+            gt_depth_map = data["depth"]
+            pred_depth_map = pred["depth"].detach()
+            if "depth_mean" in data:
+                gt_depth_map = gt_depth_map * data["depth_std"] + data["depth_mean"]
+                pred_depth_map = pred_depth_map * data["depth_std"] + data["depth_mean"]
+            if "depth_max" in data:
+                gt_depth_map = gt_depth_map * (data["depth_max"] - data["depth_min"]) + data["depth_min"]
+                pred_depth_map = pred_depth_map * (data["depth_max"] - data["depth_min"]) + data["depth_min"]
             gt_depth_map = cls.convert_disparity_to_rgb(gt_depth_map.permute(1, 2, 0))
-            depth_map = cls.convert_disparity_to_rgb(depth_map.permute(1, 2, 0))
-            img = np.concatenate((gt_depth_map, depth_map), axis=1)
+            pred_depth_map = cls.convert_disparity_to_rgb(pred_depth_map.permute(1, 2, 0))
+            # Create comparision image
+            img = np.concatenate((gt_depth_map, pred_depth_map), axis=1)
             img = img.transpose(2, 0, 1)
             img_name = "Left: GT depth map;  Right: Predicted depth map"
             storage.put_image(img_name, img)
-            break  # only visualize one image
+            break  # Only visualize one image
 
     @classmethod
     def convert_disparity_to_rgb(cls, image):
