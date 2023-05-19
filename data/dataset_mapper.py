@@ -82,11 +82,12 @@ class DepthDatasetMapper(DatasetMapper):
     def read_depth_map(cls, file_name):
         with PathManager.open(file_name, "rb") as f:
             image = Image.open(f)
-            image = image.convert("L")
-
             # work around this bug: https://github.com/python-pillow/Pillow/issues/3973
             image = _apply_exif_orientation(image)
-            return convert_PIL_to_numpy(image, "L")
+
+            image = np.copy(np.asarray(image)).astype(np.float32)
+            image[image > 0] = (image[image > 0] - 1) / 256
+            return np.expand_dims(image, -1)
 
 
 class TeacherStudentDepthDatasetMapper(DepthDatasetMapper):
@@ -192,16 +193,19 @@ def test_augmentation():
     aug_img.show()
 
 
-def test_normalize():
+def test_read_disparity():
     cwd = os.getcwd().removesuffix("/data")
-    img = Image.open(os.path.join(cwd, "datasets", "cityscapes", "disparity",
-                                  "train", "bremen", "bremen_000084_000019_disparity.png"))
-    img.show()
-    image = img.convert("L")
-    image = np.asarray(image)
-    grayscale = Image.fromarray(image)
-    grayscale.show()
+    path = os.path.join(cwd, "datasets", "cityscapes", "disparity",
+                        "train", "darmstadt", "darmstadt_000024_000019_disparity.png")
+    img = Image.open(path)
+    image = np.copy(np.asarray(img)).astype(np.float32)
+    image[image > 0] = (image[image > 0] - 1) / 256
+
+    img2 = Image.fromarray(image)
+    img2.show()
+    img3 = img2.convert("RGB")
+    img3.save("test1.png")
 
 
 if __name__ == "__main__":
-    test_normalize()
+    test_read_disparity()

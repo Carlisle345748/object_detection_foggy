@@ -94,10 +94,17 @@ class ResnetDEB(nn.Module):
         for data, pred in zip(batched_inputs, depth_maps):
             gt_depth_map = data["depth"] * data["depth_std"] + data["depth_mean"]
             depth_map = pred["depth"].detach() * data["depth_std"] + data["depth_mean"]
-            gt_depth_map = convert_image_to_rgb(gt_depth_map.permute(1, 2, 0), "L")
-            depth_map = convert_image_to_rgb(depth_map.permute(1, 2, 0), "L")
+            gt_depth_map = cls.convert_image_to_rgb(gt_depth_map.permute(1, 2, 0))
+            depth_map = cls.convert_image_to_rgb(depth_map.permute(1, 2, 0))
             img = np.concatenate((gt_depth_map, depth_map), axis=1)
             img = img.transpose(2, 0, 1)
             img_name = "Left: GT depth map;  Right: Predicted depth map"
             storage.put_image(img_name, img)
             break  # only visualize one image
+
+    @classmethod
+    def convert_disparity_to_rgb(cls, image):
+        if isinstance(image, torch.Tensor):
+            image = image.cpu().numpy()
+        image = Image.fromarray(image).convert("RGB")
+        return np.asarray(image)
