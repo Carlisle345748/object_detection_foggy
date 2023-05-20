@@ -42,10 +42,14 @@ class DepthDatasetMapper(DatasetMapper):
         utils.check_image_size(dataset_dict, depth)
 
         # Normalize depth
-        depth_mean, depth_std = np.mean(depth), np.std(depth)
-        depth = ((depth - depth_mean) / depth_std).astype(np.float32)
-        dataset_dict["depth_mean"] = depth_mean
-        dataset_dict["depth_std"] = depth_std
+        # depth_mean, depth_std = np.mean(depth), np.std(depth)
+        # depth = ((depth - depth_mean) / depth_std).astype(np.float32)
+        # dataset_dict["depth_mean"] = depth_mean
+        # dataset_dict["depth_std"] = depth_std
+        depth_max, depth_min = np.max(depth), np.min(depth)
+        depth = (depth - depth_min) / (depth_max - depth_min)
+        dataset_dict["depth_max"] = depth_max
+        dataset_dict["depth_min"] = depth_min
 
         # Apply augmentation to depth map
         depth = transforms.apply_image(depth)
