@@ -96,11 +96,10 @@ class ResnetDEB(nn.Module):
             gt_depth_map = data["depth"]
             pred_depth_map = pred["depth"].detach()
             if "depth_mean" in data:
-                gt_depth_map = gt_depth_map * data["depth_std"] + data["depth_mean"]
-                pred_depth_map = pred_depth_map * data["depth_std"] + data["depth_mean"]
-            if "depth_max" in data:
-                gt_depth_map = gt_depth_map * (data["depth_max"] - data["depth_min"]) + data["depth_min"]
-                pred_depth_map = pred_depth_map * (data["depth_max"] - data["depth_min"]) + data["depth_min"]
+                valid_mask = gt_depth_map != 0
+                gt_depth_map[valid_mask] = gt_depth_map[valid_mask] * data["depth_std"] + data["depth_mean"]
+                pred_depth_map[valid_mask] = pred_depth_map[valid_mask] * data["depth_std"] + data["depth_mean"]
+
             gt_depth_map = cls.convert_disparity_to_rgb(gt_depth_map.permute(1, 2, 0))
             pred_depth_map = cls.convert_disparity_to_rgb(pred_depth_map.permute(1, 2, 0))
             # Create comparision image

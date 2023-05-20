@@ -25,15 +25,14 @@ class DepthEvaluator(DatasetEvaluator):
         for data, pred in zip(inputs, outputs):
             gt_depth_map = data["depth"]
             pred_depth_map = pred["depth"].to(gt_depth_map.device)
+
+            valid_mask = gt_depth_map != 0
+            pred_depth_map = pred_depth_map[valid_mask]
+            gt_depth_map = gt_depth_map[valid_mask]
+
             if "depth_mean" in data:
                 gt_depth_map = gt_depth_map * data["depth_std"] + data["depth_mean"]
                 pred_depth_map = pred_depth_map * data["depth_std"] + data["depth_mean"]
-            if "depth_max" in data:
-                gt_depth_map = gt_depth_map * (data["depth_max"] - data["depth_min"]) + data["depth_min"]
-                pred_depth_map = pred_depth_map * (data["depth_max"] - data["depth_min"]) + data["depth_min"]
-
-            pred_depth_map = pred_depth_map[gt_depth_map != 0]
-            gt_depth_map = gt_depth_map[gt_depth_map != 0]
 
             self.mse += F.mse_loss(pred_depth_map, gt_depth_map).item()
             self.mae += torch.mean(torch.abs(pred_depth_map - gt_depth_map)).item()
