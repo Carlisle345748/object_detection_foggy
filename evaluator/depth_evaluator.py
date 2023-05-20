@@ -32,6 +32,9 @@ class DepthEvaluator(DatasetEvaluator):
                 gt_depth_map = gt_depth_map * (data["depth_max"] - data["depth_min"]) + data["depth_min"]
                 pred_depth_map = pred_depth_map * (data["depth_max"] - data["depth_min"]) + data["depth_min"]
 
+            pred_depth_map = pred_depth_map[gt_depth_map != 0]
+            gt_depth_map = gt_depth_map[gt_depth_map != 0]
+
             self.mse += F.mse_loss(pred_depth_map, gt_depth_map).item()
             self.mae += torch.mean(torch.abs(pred_depth_map - gt_depth_map)).item()
             self.silog += self.silog_loss(pred_depth_map, gt_depth_map).item()
