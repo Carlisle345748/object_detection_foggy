@@ -202,8 +202,8 @@ class TeacherStudentRCNN(nn.Module):
     def add_pseudo_labels(cls, batch_inputs, pseudo_labels):
         for data, instance in zip(batch_inputs, pseudo_labels):
             gt_instances = Instances(instance.image_size)
-            gt_instances.gt_boxes = instance.pred_boxes
-            gt_instances.gt_classes = instance.pred_classes
+            gt_instances.gt_boxes = instance.pred_boxes.cpu()
+            gt_instances.gt_classes = instance.pred_classes.cpu()
             data["instances"] = gt_instances
         return batch_inputs
 
