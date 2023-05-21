@@ -11,3 +11,5 @@ pip install shapely
 python3 -m pip install 'git+https://github.com/facebookresearch/detectron2.git'
 
 pip install tensorboard
+
+pip install opencv-python
