@@ -1,12 +1,11 @@
-import torch
-import torch.nn as nn
-import numpy as np
-from PIL import Image
-from detectron2.config import configurable
-from detectron2.data.detection_utils import convert_image_to_rgb
-from detectron2.modeling import META_ARCH_REGISTRY, ResNet, build_backbone
 from typing import List, Dict, Tuple
 
+import numpy as np
+import torch
+import torch.nn as nn
+from PIL import Image
+from detectron2.config import configurable
+from detectron2.modeling import META_ARCH_REGISTRY, ResNet, build_backbone
 from detectron2.structures import ImageList
 from detectron2.utils.events import get_event_storage
 
@@ -98,7 +97,7 @@ class ResnetDEB(nn.Module):
             if "depth_mean" in data:
                 valid_mask = gt_depth_map != 0
                 gt_depth_map[valid_mask] = gt_depth_map[valid_mask] * data["depth_std"] + data["depth_mean"]
-                pred_depth_map[valid_mask] = pred_depth_map[valid_mask] * data["depth_std"] + data["depth_mean"]
+                pred_depth_map = pred_depth_map * data["depth_std"] + data["depth_mean"]
 
             gt_depth_map = cls.convert_disparity_to_rgb(gt_depth_map.permute(1, 2, 0))
             pred_depth_map = cls.convert_disparity_to_rgb(pred_depth_map.permute(1, 2, 0))

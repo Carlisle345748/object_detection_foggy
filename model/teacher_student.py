@@ -10,10 +10,12 @@ from detectron2.modeling import GeneralizedRCNN, META_ARCH_REGISTRY, detector_po
 from detectron2.modeling.proposal_generator import RPN
 from detectron2.modeling.roi_heads import Res5ROIHeads
 from detectron2.structures import Instances, ImageList
+from detectron2.utils.events import get_event_storage
 
 import model.roi_head  # Import for side-effect
 from model.depth_estimation import DEB
 from model.discriminator import Discriminator
+from model.resnet_deb import ResnetDEB
 
 
 @META_ARCH_REGISTRY.register()
@@ -141,6 +143,7 @@ class TeacherStudentRCNN(nn.Module):
 
     def student_forward(self, batched_inputs, discriminator_label):
         assert self.student.training
+        storage = get_event_storage()
 
         image_key = "image_strong_aug" if self.strong_augmentation else "image"
         images = self.preprocess_image(batched_inputs, image_key=image_key)
@@ -156,7 +159,9 @@ class TeacherStudentRCNN(nn.Module):
         deb_losses = {}
         if self.depth_estimation is not None and "depth" in batched_inputs[0]:
             gt_depth = self.preprocess_depth(batched_inputs)
-            deb_losses, _ = self.depth_estimation(features[self.backbone_out_feature], gt_depth.tensor)
+            deb_losses, depth_map = self.depth_estimation(features[self.backbone_out_feature], gt_depth.tensor)
+            if self.vis_period > 0 and storage.iter % self.vis_period == 0:
+                ResnetDEB.visualize_training(batched_inputs, depth_map)
 
         if self.student.proposal_generator is not None:
             proposals, proposal_losses = self.student.proposal_generator(images, features, gt_instances)
@@ -166,6 +171,9 @@ class TeacherStudentRCNN(nn.Module):
             proposal_losses = {}
 
         _, detector_losses = self.student.roi_heads(images, features, proposals, gt_instances)
+
+        if self.vis_period > 0 and storage.iter % self.vis_period == 0 and discriminator_label == self.TARGET_LABEL:
+            self.student.visualize_training(batched_inputs, proposals)
 
         losses = {}
         losses.update(detector_losses)
@@ -229,7 +237,7 @@ class TeacherStudentRCNN(nn.Module):
 
     def preprocess_depth(self, batched_inputs: List[Dict[str, torch.Tensor]]):
         """
-        Normalize, pad and batch the input images.
+        Pad and batch the input images.
         """
         gt_depth = [x["depth"].to(self.student.device) for x in batched_inputs]
         gt_depth = ImageList.from_tensors(

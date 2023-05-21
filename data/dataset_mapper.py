@@ -9,7 +9,7 @@ from detectron2.config import get_cfg, configurable
 from detectron2.data import DatasetMapper
 from detectron2.data import detection_utils as utils
 from detectron2.data import transforms as T
-from detectron2.data.detection_utils import _apply_exif_orientation, convert_PIL_to_numpy
+from detectron2.data.detection_utils import _apply_exif_orientation
 from detectron2.utils.file_io import PathManager
 
 from data.augmentation import build_strong_augmentation
@@ -42,11 +42,11 @@ class DepthDatasetMapper(DatasetMapper):
         utils.check_image_size(dataset_dict, depth)
 
         # Normalize depth
-        valid_mask = depth != 0
-        depth_mean, depth_std = np.mean(depth[valid_mask]), np.std(depth[valid_mask])
-        depth[valid_mask] = ((depth[valid_mask] - depth_mean) / depth_std).astype(np.float32)
-        dataset_dict["depth_mean"] = depth_mean
-        dataset_dict["depth_std"] = depth_std
+        # valid_mask = depth != 0
+        # depth_mean, depth_std = np.mean(depth[valid_mask]), np.std(depth[valid_mask])
+        # depth[valid_mask] = ((depth[valid_mask] - depth_mean) / depth_std).astype(np.float32)
+        # dataset_dict["depth_mean"] = depth_mean
+        # dataset_dict["depth_std"] = depth_std
 
         # Apply augmentation to depth map
         depth = transforms.apply_image(depth)
