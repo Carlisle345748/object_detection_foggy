@@ -86,7 +86,7 @@ class TeacherStudentRCNN(nn.Module):
             "target_losses_weight": cfg.MODEL.TEACHER_STUDENT.TARGET_WEIGHT,
             "discriminator_losses_weight": cfg.MODEL.TEACHER_STUDENT.DIS.LOSS_WEIGHT,
             "depth_losses_weight": cfg.MODEL.TEACHER_STUDENT.DEPTH_WEIGHT,
-            "strong_augmentation": cfg.INPUT.TEACHER_STUDENT.STRONG_AUG
+            "strong_augmentation": cfg.INPUT.STRONG_AUG
         }
 
     def forward(self, batched_inputs):
