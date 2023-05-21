@@ -237,7 +237,7 @@ class TeacherStudentRCNN(nn.Module):
 
     def preprocess_depth(self, batched_inputs: List[Dict[str, torch.Tensor]]):
         """
-        Pad and batch the input images.
+        Pad and batch the input depth map.
         """
         gt_depth = [x["depth"].to(self.student.device) for x in batched_inputs]
         gt_depth = ImageList.from_tensors(
