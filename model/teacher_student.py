@@ -37,6 +37,7 @@ class TeacherStudentRCNN(nn.Module):
             discriminator_losses_weight=0.1,
             depth_losses_weight=0.1,
             strong_augmentation=False,
+            vis_period=0,
     ):
         super().__init__()
         self.student = student
@@ -45,6 +46,7 @@ class TeacherStudentRCNN(nn.Module):
         self.depth_estimation = depth_estimation
         self.backbone_out_feature = backbone_out_feature
         self.teacher_update_step = teacher_update_step
+        self.vis_period = vis_period
 
         self.SOURCE_LABEL = 0
         self.TARGET_LABEL = 1
@@ -86,7 +88,8 @@ class TeacherStudentRCNN(nn.Module):
             "target_losses_weight": cfg.MODEL.TEACHER_STUDENT.TARGET_WEIGHT,
             "discriminator_losses_weight": cfg.MODEL.TEACHER_STUDENT.DIS.LOSS_WEIGHT,
             "depth_losses_weight": cfg.MODEL.TEACHER_STUDENT.DEPTH_WEIGHT,
-            "strong_augmentation": cfg.INPUT.STRONG_AUG
+            "strong_augmentation": cfg.INPUT.STRONG_AUG,
+            "vis_period": cfg.VIS_PERIOD,
         }
 
     def forward(self, batched_inputs):
