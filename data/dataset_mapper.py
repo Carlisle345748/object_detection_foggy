@@ -122,7 +122,7 @@ class TeacherStudentDepthDatasetMapper(DepthDatasetMapper):
 
         # Add depth map into datadict
         if depth is not None:
-            dataset_dict["depth"] = torch.as_tensor(np.ascontiguousarray(depth))
+            dataset_dict["depth"] = torch.as_tensor(np.ascontiguousarray(depth.transpose(2, 0, 1)))
 
         image_shape = image.shape[:2]  # h, w
         # Pytorch's dataloader is efficient on torch.Tensor due to shared-memory,

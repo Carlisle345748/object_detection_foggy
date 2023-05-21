@@ -14,11 +14,11 @@ MODEL:
       LOSS_WEIGHT: 0.1
       FOCAL:
         ENABLE: false
-    DEB: false
+    DEB: true
     ROI_FOCAL_LOSS:
       ENABLE: true
 INPUT:
-  MIN_SIZE_TRAIN: (600,)
+  MIN_SIZE_TRAIN: (640,)
   MIN_SIZE_TRAIN_SAMPLING: "choice"
   MIN_SIZE_TEST: 1024
   MAX_SIZE_TRAIN: 2048
