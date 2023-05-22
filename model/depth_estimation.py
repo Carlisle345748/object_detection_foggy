@@ -19,7 +19,7 @@ class DEB(nn.Module):
             nn.GroupNorm(num_groups=2, num_channels=128),
             nn.LeakyReLU(),
             nn.ConvTranspose2d(128, 64, kernel_size=3, stride=2, padding=1, output_padding=1),
-            nn.BatchNorm2d(64),
+            nn.GroupNorm(num_groups=2, num_channels=64),
             nn.LeakyReLU(),
             nn.ConvTranspose2d(64, 1, kernel_size=3, stride=2, padding=1, output_padding=1),
         )
