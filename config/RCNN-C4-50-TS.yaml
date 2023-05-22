@@ -11,7 +11,7 @@ MODEL:
     BASE_ARCH: "GeneralizedRCNN"
     WEIGHTS: "output/cityscapes_baseline/model_final.pth"
     DIS:
-      LOSS_WEIGHT: 1
+      LOSS_WEIGHT: 1.0
       FOCAL:
         ENABLE: false
     DEB: true
