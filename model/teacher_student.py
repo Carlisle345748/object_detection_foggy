@@ -159,7 +159,9 @@ class TeacherStudentRCNN(nn.Module):
 
         features = self.student.backbone(images.tensor)
 
-        discriminator_losses = self.discriminator(features[self.backbone_out_feature], discriminator_label)
+        discriminator_losses = {}
+        if self.discriminator is not None:
+            discriminator_losses = self.discriminator(features[self.backbone_out_feature], discriminator_label)
 
         deb_losses = {}
         if self.depth_estimation is not None and "depth" in batched_inputs[0]:
