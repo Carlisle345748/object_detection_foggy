@@ -75,8 +75,9 @@ class TeacherStudentRCNN(nn.Module):
             loss="focal" if cfg.MODEL.TEACHER_STUDENT.DIS.FOCAL.ENABLE else "bce",
             alpha=cfg.MODEL.TEACHER_STUDENT.DIS.FOCAL.ALPHA,
             gamma=cfg.MODEL.TEACHER_STUDENT.DIS.FOCAL.GAMMA,
-        )
-        depth_estimation = DEB(feature_shape) if cfg.MODEL.TEACHER_STUDENT.DEB else None
+        ) if cfg.MODEL.TEACHER_STUDENT.DIS.ENABLE else None
+
+        depth_estimation = DEB(feature_shape) if cfg.MODEL.TEACHER_STUDENT.DEB.ENABLE else None
 
         return {
             "teacher": teacher_model,
@@ -88,6 +89,7 @@ class TeacherStudentRCNN(nn.Module):
             "target_losses_weight": cfg.MODEL.TEACHER_STUDENT.TARGET_WEIGHT,
             "discriminator_losses_weight": cfg.MODEL.TEACHER_STUDENT.DIS.LOSS_WEIGHT,
             "depth_losses_weight": cfg.MODEL.TEACHER_STUDENT.DEPTH_WEIGHT,
+            "teacher_update_step": cfg.MODEL.TEACHER_STUDENT.TEACHER_UPDATE_STEP,
             "strong_augmentation": cfg.INPUT.STRONG_AUG,
             "vis_period": cfg.VIS_PERIOD,
         }

@@ -10,13 +10,11 @@ MODEL:
   TEACHER_STUDENT:
     BASE_ARCH: "GeneralizedRCNN"
     WEIGHTS: "output/cityscapes_baseline/model_final.pth"
+    TEACHER_UPDATE_STEP: 1
     DIS:
       LOSS_WEIGHT: 0.1
-      FOCAL:
-        ENABLE: false
-    DEB: true
-    DEPTH_WEIGHT: 1.0
-    ROI_FOCAL_LOSS:
+      ENABLE: true
+    DEB:
       ENABLE: true
 INPUT:
   MIN_SIZE_TRAIN: (640,)
@@ -33,7 +31,7 @@ DATASETS:
 SOLVER:
   BASE_LR: 0.001
   WEIGHT_DECAY: 0.0005
-  STEPS: (40000,)
+  STEPS: (30000,)
   MAX_ITER: 50000
   IMS_PER_BATCH_SOURCE: 4
   IMS_PER_BATCH_TARGET: 4
