@@ -9,6 +9,7 @@ from detectron2.utils import comm
 from detectron2.utils.logger import setup_logger
 
 from data.domain_adaptation_dataloader import build_domain_adaptation_train_loader
+from evaluator.coco_evaluator import COCOEvaluatorAP50
 from model.teacher_student import TeacherStudentRCNN
 from trainer.checkpointer import TeacherStudentCheckpointer
 from trainer.grad_monitor import GradMonitor
@@ -49,7 +50,7 @@ class TeacherStudentTrainer(DefaultTrainer, ABC):
 
     @classmethod
     def build_evaluator(cls, cfg, dataset_name):
-        return [COCOEvaluator(dataset_name, tasks=("bbox",), output_dir=os.path.join(cfg.OUTPUT_DIR, "inference"))]
+        return [COCOEvaluatorAP50(dataset_name, tasks=("bbox",), output_dir=os.path.join(cfg.OUTPUT_DIR, "inference"))]
 
     @classmethod
     def build_train_loader(cls, cfg):
