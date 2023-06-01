@@ -61,7 +61,7 @@ def evaluation(cfg):
     TeacherStudentCheckpointer(cfg, model, save_dir=cfg.OUTPUT_DIR).resume_or_load(
         os.path.join(cfg.OUTPUT_DIR, cfg.MODEL.WEIGHTS), resume=False
     )
-    res = BaselineTrainer.test(cfg, model)
+    res = TeacherStudentTrainer.test(cfg, model)
     return res
 
 
